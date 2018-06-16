@@ -16,6 +16,7 @@
 library(sqldf)
 library(TraMineR)
 library(seqHMM)
+library(HMM)
 
 setwd("S:/")
 
@@ -41,19 +42,98 @@ timestamp_sequence <- transform(timestamp_sequence,id=as.numeric(factor(user_id)
 
 timestamp_sequence <- sqldf("Select id,timestamp,genre as event from timestamp_sequence")
 
+# Convert TSE sequences into STS sequences
+
 sts <- TSE_TO_STS2(timestamp_sequence)
+
+# Split data into training and test
+
+set.seed(101) # Set Seed so that same sample can be reproduced in future also
+# Now Selecting 75% of data as sample from total 'n' rows of the data
+sample <- sample.int(n = nrow(sts), size = floor(.50*nrow(sts)), replace = F)
+train <- sts[sample, ]
+test  <- sts[-sample, ]
 
 
 # Generate genre list
 allmusic_genres <- as.character(unique(timestamp_sequence$event))
 
-sts_seq <- seqdef(sts, alphabet = allmusic_genres, states = allmusic_genres,
+
+
+sts_seq <- seqdef(train[1:10,], alphabet = allmusic_genres, states = allmusic_genres,
                   labels = allmusic_genres, xtstep = 1)
 
 init_hmm_music <- build_hmm(observations = sts_seq, n_states = 2)
 
-fit_hmm_music <- fit_model(init_hmm_music, control_em = list(restart = list(times = 50)))
-hmm_music <- fit_hmm$model
+start.time <- Sys.time()
+
+# fit model to train data
+fit_hmm_music <- fit_model(init_hmm_music, control_em = list(restart = list(times = 10)))
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+print(time.taken)
+
+hmm_music <- fit_hmm_music$model
+
+# create predictions
+predicted_results <- test_model(hmm_music,test)
+
+# FUNCTIONS #########################################################################################################
+
+test_model <- function(fittedHMM,testdata){
+
+  hmm_prediction <-init_prediction_hmm(fittedHMM)
+
+  results <- matrix(, nrow(testdata), 2)
+  colnames(results) <- c("ACTUAL","PREDICTED")
+
+  for (row in 1:nrow(testdata)){
+    NonNAindex <- which(!is.na(testdata[row,]))
+    lastNonNA <- max(NonNAindex)
+
+    results[row,1] <- testdata[row,lastNonNA]
+
+    results[row,2] <- predict(hmm_prediction,testdata[row,1:(lastNonNA-1)])
+
+  }
+
+
+  return(data.frame(results,stringsAsFactors=F))
+}
+
+init_prediction_hmm <- function(seqhmm){
+  return(initHMM(seqhmm$state_names, seqhmm$symbol_names,startProbs = seqhmm$initial_probs, transProbs=seqhmm$transition_probs,
+                           emissionProbs=seqhmm$emission_probs))
+}
+
+predict <- function(hmm, obs){
+
+  # Remove NA values from sequence
+  filtered_obs <- Filter(Negate(is.na), obs)
+
+  # Define Max Values
+  pMax <- 0
+  sMax <- ""
+
+  # Iterate through all symbols and calculate likelihood of given observation with symbol at On+1 to be represented by the given hmm
+  for (symbol in hmm$Symbols){
+
+    logForwardProbabilities = forward(hmm,append(filtered_obs,symbol))
+    forwardProbabilities = exp(logForwardProbabilities)
+
+    finalProbability = sum(forwardProbabilities[,ncol(forwardProbabilities)])
+
+    #print(append(filtered_obs,symbol))
+    #print(finalProbability)
+
+    if(finalProbability>pMax){
+      sMax <- symbol
+    }
+  }
+
+  # Return symbol with the greatest likelihood
+  return(sMax)
+}
 
 TSE_TO_STS2 <- function(TSE_sequence){
 
