@@ -17,8 +17,11 @@ library(sqldf)
 library(TraMineR)
 library(seqHMM)
 library(HMM)
+library(hmm.discnp)
 
 setwd("S:/")
+
+subset <- sqldf("Select jam_id, user_id, artist, title, creation_date, link, spotify_uri,genre from jams_genre_clean order by user_id, creation_date limit 1000")
 
 jams <- loadjams("/thisismyjam-datadump/archive/jams.tsv")
 
@@ -68,7 +71,7 @@ init_hmm_music <- build_hmm(observations = sts_seq, n_states = 2)
 start.time <- Sys.time()
 
 # fit model to train data
-fit_hmm_music <- fit_model(init_hmm_music, control_em = list(restart = list(times = 10)))
+fit_hmm_music <- fit_model(init_hmm_music, control_em = list(restart = list(times = 10)), threads = 1)
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(time.taken)
@@ -76,13 +79,29 @@ print(time.taken)
 hmm_music <- fit_hmm_music$model
 
 # create predictions
-predicted_results <- test_model(hmm_music,test)
+
+seqPredictionHMM <- init_prediction_hmm(hmm_music)
+
+predicted_results <- test_model(seqPredictionHMM, test)
+
+
+# hmm.discnp Package
+
+# Convert STS Data to list
+
+sts_list <- as.list(data.frame(t(sts)))
+
+fit2 <- hmm(sts_list,yval = allmusic_genres, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300)
+
+predictionHMM <- hmm.discnp_to_hmm(fit2,c("State 1", "State 2"),allmusic_genres)
+
+model_test <- test_model(predictionHMM, test)
+
+nrow(model_test[model_test$ACTUAL == model_test$PREDICTED,])/nrow(model_test)
 
 # FUNCTIONS #########################################################################################################
 
-test_model <- function(fittedHMM,testdata){
-
-  hmm_prediction <-init_prediction_hmm(fittedHMM)
+test_model <- function(hmm_prediction,testdata){
 
   results <- matrix(, nrow(testdata), 2)
   colnames(results) <- c("ACTUAL","PREDICTED")
@@ -106,6 +125,11 @@ init_prediction_hmm <- function(seqhmm){
                            emissionProbs=seqhmm$emission_probs))
 }
 
+hmm.discnp_to_hmm <- function(discnp, state_names, symbol_names){
+  return(initHMM(state_names, symbol_names,startProbs = discnp$ispd, transProbs= discnp$tpm,
+                 emissionProbs=t(discnp$Rho)))
+}
+
 predict <- function(hmm, obs){
 
   # Remove NA values from sequence
@@ -127,6 +151,7 @@ predict <- function(hmm, obs){
     #print(finalProbability)
 
     if(finalProbability>pMax){
+      pMax <- finalProbability
       sMax <- symbol
     }
   }
