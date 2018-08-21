@@ -120,6 +120,10 @@ test_model <- function(hmm_prediction,testdata){
   return(data.frame(results,stringsAsFactors=F))
 }
 
+calcAccuracy <- function(testresult){
+  return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
+}
+
 init_prediction_hmm <- function(seqhmm){
   return(initHMM(seqhmm$state_names, seqhmm$symbol_names,startProbs = seqhmm$initial_probs, transProbs=seqhmm$transition_probs,
                            emissionProbs=seqhmm$emission_probs))
