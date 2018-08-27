@@ -14,8 +14,6 @@
 #   Test Package:              'Ctrl + Shift + T'
 
 library(sqldf)
-library(TraMineR)
-library(seqHMM)
 library(HMM)
 library(hmm.discnp)
 
@@ -25,7 +23,7 @@ jams <- load_jams("/thisismyjam-datadump/archive/jams.tsv")
 
 jams_genre <- add_genres_to_jams(jams,"/LFM-1b_UGP/genres_allmusic.txt","/LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt")
 
-timestamp_sequence <- create_timestamp_sequence(jams_genre)
+timestamp_sequence <- create_time_sequence(jams_genre)
 
 # Split data into training and test
 
@@ -34,53 +32,16 @@ splitted_data <- split_data(timestamp_sequence)
 train <- splitted_data[[1]]
 test  <- splitted_data[[2]]
 
-# Generate genre list
-allmusic_genres <- as.character(unique(timestamp_sequence$event))
 
-if(false){
+trained_MIR_hmm <- MIR_hmm(train)
 
-sts_seq <- seqdef(train[1:10,], alphabet = allmusic_genres, states = allmusic_genres,
-                  labels = allmusic_genres, xtstep = 1)
+vanillahmm <- trained_MIR_hmm[[2]]
 
-init_hmm_music <- build_hmm(observations = sts_seq, n_states = 2)
 
-start.time <- Sys.time()
 
-# fit model to train data
-fit_hmm_music <- fit_model(init_hmm_music, control_em = list(restart = list(times = 10)), threads = 1)
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-print(time.taken)
+# FUNCTIONS #####################################################################################################################
 
-hmm_music <- fit_hmm_music$model
-
-# create predictions
-
-seqPredictionHMM <- init_prediction_hmm(hmm_music)
-
-predicted_results <- test_model(seqPredictionHMM, test)
-
-}
-
-# hmm.discnp Package
-
-# Convert STS Data to list
-
-sts_list <- as.list(data.frame(t(train)))
-
-fit2 <- hmm(sts_list,yval = allmusic_genres, K = 4, verbose = TRUE, tolerance = 0.001, itmax = 600)
-
-test <- big_hmm(train)
-
-predictionHMM <- hmm.discnp_to_hmm(fit2,c("State 1", "State 2", "State 3", "State 4"),allmusic_genres)
-
-model_test <- test_model(predictionHMM, test)
-
-calcAccuracy(model_test)
-
-# FUNCTIONS #############################################################################################################
-
-create_timestamp_sequence <- function(clearedData){
+create_time_sequence <- function(clearedData){
 
   timestamp_sequence <- sqldf("Select user_id, creation_date, genre from clearedData order by user_id, creation_date")
 
@@ -96,7 +57,7 @@ create_timestamp_sequence <- function(clearedData){
 
   timestamp_sequence <- sqldf("Select id,timestamp,genre as event from timestamp_sequence")
 
-  sts_sequence <- TSE_TO_STS2(time_sequence)
+  sts_sequence <- TSE_TO_STS2(timestamp_sequence)
 
   return(sts_sequence)
 
@@ -123,7 +84,7 @@ TSE_TO_STS2 <- function(TSE_sequence){
   return(sts)
 }
 
-test_model <- function(hmm_prediction,testdata){
+test_model <- function(trained_MIR_hmm,testdata){
 
   results <- matrix(, nrow(testdata), 2)
   colnames(results) <- c("ACTUAL","PREDICTED")
@@ -134,31 +95,20 @@ test_model <- function(hmm_prediction,testdata){
 
     results[row,1] <- testdata[row,lastNonNA]
 
-    results[row,2] <- predict(hmm_prediction,testdata[row,1:(lastNonNA-1)])
+    results[row,2] <- predict(trained_MIR_hmm,testdata[row,1:(lastNonNA-1)])
 
   }
 
-  data.frame(results,stringsAsFactors=F)
-
-
-  return()
+  return(data.frame(results,stringsAsFactors=F))
 }
 
 calcAccuracy <- function(testresult){
   return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
 }
 
-init_prediction_hmm <- function(seqhmm){
-  return(initHMM(seqhmm$state_names, seqhmm$symbol_names,startProbs = seqhmm$initial_probs, transProbs=seqhmm$transition_probs,
-                           emissionProbs=seqhmm$emission_probs))
-}
+predict <- function(MIR_hmm, obs){
 
-hmm.discnp_to_hmm <- function(discnp, state_names, symbol_names){
-  return(initHMM(state_names, symbol_names,startProbs = discnp$ispd, transProbs= discnp$tpm,
-                 emissionProbs=t(discnp$Rho)))
-}
-
-predict <- function(hmm, obs){
+  hmm <- MIR_hmm[[2]]
 
   # Remove NA values from sequence
   filtered_obs <- Filter(Negate(is.na), obs)
@@ -276,11 +226,11 @@ add_genres_to_jams <- function(jams_clean,lexicon_path,artist_genre_path){
 
 }
 
-split_data <- function(data){
+split_data <- function(data, split_ratio = .50){
 
   set.seed(101) # Set Seed so that same sample can be reproduced in future also
   # Now Selecting 50% of data as sample from total 'n' rows of the data
-  sample <- sample.int(n = nrow(data), size = floor(.50*nrow(data)), replace = F)
+  sample <- sample.int(n = nrow(data), size = floor(split_ratio*nrow(data)), replace = F)
   list <- list()
   list[[1]] <- data[sample, ]
   list[[2]] <- data[-sample, ]
@@ -290,12 +240,14 @@ split_data <- function(data){
 
 # big_hmm contains a hidden markov model of the discnp package and one of the hmm package
 
-big_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
+MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
 
   # Retrieve all genres to pass as symbols argrument to HMM constructor
 
   allmusic_genres <- unique(c(training_data))
   allmusic_genres <- as.character(allmusic_genres[!is.na(allmusic_genres)])
+
+  # Create list of state names
 
   state_names <- vector(mode="numeric", length=0)
 
@@ -307,12 +259,13 @@ big_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
   # Transforms training data which is in STS format to list of vectors
   training_list <- as.list(data.frame(t(training_data)))
 
+  # Train discnp model
+  discnp_hmm <- hmm(training_list,allmusic_genres, K = K, verbose = verbose, tolerance = tolerance, itmax = itmax, keep.y=FALSE)
+  # Create hmm model with data from discnp model
+  hmm <- initHMM(state_names, allmusic_genres,startProbs = discnp_hmm$ispd, transProbs= discnp_hmm$tpm, emissionProbs=t(discnp_hmm$Rho))
 
-  discnp <- hmm(training_list,allmusic_genres, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300, keep.y=FALSE)
-  vanilla <- initHMM(state_names, allmusic_genres,startProbs = discnp$ispd, transProbs= discnp$tpm, emissionProbs=t(discnp$Rho))
+  value <- list(discnp_hmm,hmm)
 
-  value <- list(discnp,vanilla)
-
-  attr(value, "class") <- "big_hmm"
+  attr(value, "class") <- "MIR_hmm"
   value
 }
