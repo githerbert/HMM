@@ -21,47 +21,23 @@ library(hmm.discnp)
 
 setwd("S:/")
 
-subset <- sqldf("Select jam_id, user_id, artist, title, creation_date, link, spotify_uri,genre from jams_genre_clean order by user_id, creation_date limit 1000")
+jams <- load_jams("/thisismyjam-datadump/archive/jams.tsv")
 
-jams <- loadjams("/thisismyjam-datadump/archive/jams.tsv")
+jams_genre <- add_genres_to_jams(jams,"/LFM-1b_UGP/genres_allmusic.txt","/LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt")
 
-jams_genre <- load_allmusic_genres(jams,"/LFM-1b_UGP/genres_allmusic.txt","/LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt")
-
-jams_genre_clean <-removeUsersWithoutGenre(jams_genre)
-
-genre_distribution <- sqldf("Select genre, count(genre) from jams_genre_clean group by genre")
-
-timestamp_sequence <- sqldf("Select user_id, creation_date, genre from jams_genre_clean order by user_id, creation_date")
-
-# Add discrete timestamp to sequences
-
-timestamp_sequence$timestamp <- with(timestamp_sequence, ave(seq_along(user_id), user_id, FUN=seq_along))
-
-# Add numeric id to sequences
-
-timestamp_sequence <- transform(timestamp_sequence,id=as.numeric(factor(user_id)))
-
-# Create data for tse sequence
-
-timestamp_sequence <- sqldf("Select id,timestamp,genre as event from timestamp_sequence")
-
-# Convert TSE sequences into STS sequences
-
-sts <- TSE_TO_STS2(timestamp_sequence)
+timestamp_sequence <- create_timestamp_sequence(jams_genre)
 
 # Split data into training and test
 
-set.seed(101) # Set Seed so that same sample can be reproduced in future also
-# Now Selecting 75% of data as sample from total 'n' rows of the data
-sample <- sample.int(n = nrow(sts), size = floor(.50*nrow(sts)), replace = F)
-train <- sts[sample, ]
-test  <- sts[-sample, ]
+splitted_data <- split_data(timestamp_sequence)
 
+train <- splitted_data[[1]]
+test  <- splitted_data[[2]]
 
 # Generate genre list
 allmusic_genres <- as.character(unique(timestamp_sequence$event))
 
-
+if(false){
 
 sts_seq <- seqdef(train[1:10,], alphabet = allmusic_genres, states = allmusic_genres,
                   labels = allmusic_genres, xtstep = 1)
@@ -84,22 +60,68 @@ seqPredictionHMM <- init_prediction_hmm(hmm_music)
 
 predicted_results <- test_model(seqPredictionHMM, test)
 
+}
 
 # hmm.discnp Package
 
 # Convert STS Data to list
 
-sts_list <- as.list(data.frame(t(sts)))
+sts_list <- as.list(data.frame(t(train)))
 
-fit2 <- hmm(sts_list,yval = allmusic_genres, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300)
+fit2 <- hmm(sts_list,yval = allmusic_genres, K = 4, verbose = TRUE, tolerance = 0.001, itmax = 600)
 
-predictionHMM <- hmm.discnp_to_hmm(fit2,c("State 1", "State 2"),allmusic_genres)
+test <- big_hmm(train)
+
+predictionHMM <- hmm.discnp_to_hmm(fit2,c("State 1", "State 2", "State 3", "State 4"),allmusic_genres)
 
 model_test <- test_model(predictionHMM, test)
 
-nrow(model_test[model_test$ACTUAL == model_test$PREDICTED,])/nrow(model_test)
+calcAccuracy(model_test)
 
-# FUNCTIONS #########################################################################################################
+# FUNCTIONS #############################################################################################################
+
+create_timestamp_sequence <- function(clearedData){
+
+  timestamp_sequence <- sqldf("Select user_id, creation_date, genre from clearedData order by user_id, creation_date")
+
+  # Add discrete timestamp to sequences
+
+  timestamp_sequence$timestamp <- with(timestamp_sequence, ave(seq_along(user_id), user_id, FUN=seq_along))
+
+  # Add numeric id to sequences
+
+  timestamp_sequence <- transform(timestamp_sequence,id=as.numeric(factor(user_id)))
+
+  # Create data for tse sequence
+
+  timestamp_sequence <- sqldf("Select id,timestamp,genre as event from timestamp_sequence")
+
+  sts_sequence <- TSE_TO_STS2(time_sequence)
+
+  return(sts_sequence)
+
+}
+
+## Transforms TSE to STS format (see Traminer description). This function works like the traminer one with the only difference that
+## empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
+
+TSE_TO_STS2 <- function(TSE_sequence){
+
+  # Generate genre list
+  allmusic_genres <- as.character(unique(TSE_sequence$event))
+
+  num_col <- max(TSE_sequence$timestamp)
+  num_rows <- length(unique(TSE_sequence$id))
+
+  sts <- matrix(, num_rows, num_col)
+
+  x <- 1
+
+  while(x <= length(TSE_sequence$id)) {
+    sts[TSE_sequence[x,1],TSE_sequence[x,2]] <- as.character(TSE_sequence[x,3]); x <- x+1;}
+
+  return(sts)
+}
 
 test_model <- function(hmm_prediction,testdata){
 
@@ -116,8 +138,10 @@ test_model <- function(hmm_prediction,testdata){
 
   }
 
+  data.frame(results,stringsAsFactors=F)
 
-  return(data.frame(results,stringsAsFactors=F))
+
+  return()
 }
 
 calcAccuracy <- function(testresult){
@@ -151,9 +175,6 @@ predict <- function(hmm, obs){
 
     finalProbability = sum(forwardProbabilities[,ncol(forwardProbabilities)])
 
-    #print(append(filtered_obs,symbol))
-    #print(finalProbability)
-
     if(finalProbability>pMax){
       pMax <- finalProbability
       sMax <- symbol
@@ -164,26 +185,7 @@ predict <- function(hmm, obs){
   return(sMax)
 }
 
-TSE_TO_STS2 <- function(TSE_sequence){
-
-  # Generate genre list
-  allmusic_genres <- as.character(unique(TSE_sequence$event))
-
-  num_col <- max(TSE_sequence$timestamp)
-  num_rows <- length(unique(TSE_sequence$id))
-
-  sts <- matrix(, num_rows, num_col)
-
-  x <- 1
-
-  while(x <= length(TSE_sequence$id)) {
-    sts[TSE_sequence[x,1],TSE_sequence[x,2]] <- as.character(TSE_sequence[x,3]); x <- x+1;}
-
-  return(sts)
-}
-
-
-loadjams <- function(path){
+load_jams <- function(path){
   jams <- read.delim(
     path,
     sep="\t", header=TRUE, fill=TRUE, quote="", colClasses = c("character", "character", "character", "character", "character", "character", "character"))
@@ -199,7 +201,7 @@ loadjams <- function(path){
 
 ####################################################################################################################
 
-load_allmusic_genres <- function(jams_clean,lexicon_path,artist_genre_path){
+add_genres_to_jams <- function(jams_clean,lexicon_path,artist_genre_path){
 
   # Read allmusic genre lexicon
 
@@ -250,14 +252,15 @@ load_allmusic_genres <- function(jams_clean,lexicon_path,artist_genre_path){
 
   artist_genre <- data.frame(artist=final_table$artist, genre=final_table$genre_name)
 
+  # Merge jams with genre
+
   jams_genre <- merge(jams_clean, artist_genre, by = "artist")
 
   users_without_genre <- subset(jams_genre, is.na(genre) == TRUE)
 
-  return(jams_genre)
-}
 
-removeUsersWithoutGenre <- function(jams_genre){
+  #################### Remove Users without genre ###########################################
+
   #Recieve users who have no genre
   users_without_genre <- subset(jams_genre, is.na(genre) == TRUE)
   # Recieve the first jam of a jam sequence that has no genre
@@ -270,5 +273,46 @@ removeUsersWithoutGenre <- function(jams_genre){
   final_data_clean <- sqldf('select * from final_data a where user_id in (Select user_id from final_data group by user_id having count(user_id) >= 2)')
 
   return (final_data_clean)
+
 }
 
+split_data <- function(data){
+
+  set.seed(101) # Set Seed so that same sample can be reproduced in future also
+  # Now Selecting 50% of data as sample from total 'n' rows of the data
+  sample <- sample.int(n = nrow(data), size = floor(.50*nrow(data)), replace = F)
+  list <- list()
+  list[[1]] <- data[sample, ]
+  list[[2]] <- data[-sample, ]
+
+  return(list)
+}
+
+# big_hmm contains a hidden markov model of the discnp package and one of the hmm package
+
+big_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
+
+  # Retrieve all genres to pass as symbols argrument to HMM constructor
+
+  allmusic_genres <- unique(c(training_data))
+  allmusic_genres <- as.character(allmusic_genres[!is.na(allmusic_genres)])
+
+  state_names <- vector(mode="numeric", length=0)
+
+  for(i in 1:K){
+    state_name <- paste("State", as.character(i), sep=" ")
+    state_names <- c(state_names, state_name)
+  }
+
+  # Transforms training data which is in STS format to list of vectors
+  training_list <- as.list(data.frame(t(training_data)))
+
+
+  discnp <- hmm(training_list,allmusic_genres, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300, keep.y=FALSE)
+  vanilla <- initHMM(state_names, allmusic_genres,startProbs = discnp$ispd, transProbs= discnp$tpm, emissionProbs=t(discnp$Rho))
+
+  value <- list(discnp,vanilla)
+
+  attr(value, "class") <- "big_hmm"
+  value
+}
