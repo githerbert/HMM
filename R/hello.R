@@ -19,9 +19,9 @@ library(hmm.discnp)
 
 setwd("S:/")
 
-jams <- load_jams("/thisismyjam-datadump/archive/jams.tsv")
+jams <- load_jams("S:/")
 
-jams_genre <- add_genres_to_jams(jams,"/LFM-1b_UGP/genres_allmusic.txt","/LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt")
+jams_genre <- add_genres_to_jams(jams,"S:/")
 
 timestamp_sequence <- create_time_sequence(jams_genre)
 
@@ -32,8 +32,11 @@ splitted_data <- split_data(timestamp_sequence)
 train <- splitted_data[[1]]
 test  <- splitted_data[[2]]
 
+trained_MIR_hmm <- MIR_hmm(train, tolerance = 0.001)
 
-trained_MIR_hmm <- MIR_hmm(train)
+save_model(trained_MIR_hmm,"2_state_hmm")
+
+hmm3 <- load_model("2_state_hmm")
 
 vanillahmm <- trained_MIR_hmm[[2]]
 
@@ -135,7 +138,10 @@ predict <- function(MIR_hmm, obs){
   return(sMax)
 }
 
-load_jams <- function(path){
+load_jams <- function(jams_path){
+
+  path <- paste(jams_path, "/thisismyjam-datadump/archive/jams.tsv", sep="")
+
   jams <- read.delim(
     path,
     sep="\t", header=TRUE, fill=TRUE, quote="", colClasses = c("character", "character", "character", "character", "character", "character", "character"))
@@ -151,7 +157,11 @@ load_jams <- function(path){
 
 ####################################################################################################################
 
-add_genres_to_jams <- function(jams_clean,lexicon_path,artist_genre_path){
+add_genres_to_jams <- function(jams_clean, LFM_path){
+
+  lexicon_path <-  paste(LFM_path, "LFM-1b_UGP/genres_allmusic.txt", sep="")
+
+  artist_genre_path <-  paste(LFM_path, "LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt", sep="")
 
   # Read allmusic genre lexicon
 
@@ -168,7 +178,8 @@ add_genres_to_jams <- function(jams_clean,lexicon_path,artist_genre_path){
 
   # Read allmusic Artist table
 
-  colClasses = c("character", "character", "character", "character", "character", "character", "character","character","character","character","character","character","character","character","character")
+  #colClasses = c("character", "character", "character", "character", "character", "character", "character","character","character","character","character","character","character","character","character")
+  colClasses = c("character", "character", "character", "character", "character", "character", "character")
 
   allmusic <- read.table(
     artist_genre_path,
@@ -268,4 +279,20 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
 
   attr(value, "class") <- "MIR_hmm"
   value
+}
+
+save_model <- function(model,model_name){
+
+model_path <- paste(model_name, ".rds", sep="")
+
+saveRDS(model, model_path)
+
+}
+
+load_model <- function(model_name){
+
+model_path <- paste(model_name, ".rds", sep="")
+
+return(readRDS(model_path))
+
 }
