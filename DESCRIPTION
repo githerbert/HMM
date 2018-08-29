@@ -1,4 +1,4 @@
-Package: HMM_MIR
+Package: hmm.mir
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
@@ -13,3 +13,4 @@ Imports:
 	hmm.discnp (>= 0.2-4),
 	HMM (>= 0.1.0),
 	sqldf
+RoxygenNote: 6.1.0
