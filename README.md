@@ -1,4 +1,4 @@
-# HMM
+# HMM_MIR
 This project uses Hidden Markov Models to give music recommendations on genres
 
 # To use the package download the following files:
