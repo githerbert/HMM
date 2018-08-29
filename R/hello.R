@@ -13,37 +13,49 @@
 #   Check Package:             'Ctrl + Shift + E'
 #   Test Package:              'Ctrl + Shift + T'
 
+#' @import sqldf
+#' @importFrom hmm.discnp hmm
+#' @importFrom HMM initHMM forward
+
 library(sqldf)
 library(HMM)
 library(hmm.discnp)
 
-setwd("S:/")
+#setwd("S:/")
 
-jams <- load_jams("S:/")
+#jams <- load_jams("S:/")
 
-jams_genre <- add_genres_to_jams(jams,"S:/")
+#jams_genre <- add_genres_to_jams(jams,"S:/")
 
-timestamp_sequence <- create_time_sequence(jams_genre)
+#timestamp_sequence <- create_time_sequence(jams_genre)
 
 # Split data into training and test
 
-splitted_data <- split_data(timestamp_sequence)
+#splitted_data <- split_data(timestamp_sequence)
 
-train <- splitted_data[[1]]
-test  <- splitted_data[[2]]
+#train <- splitted_data[[1]]
+#test  <- splitted_data[[2]]
 
-trained_MIR_hmm <- MIR_hmm(train, tolerance = 0.001)
+#trained_MIR_hmm <- MIR_hmm(train, tolerance = 0.001)
 
-save_model(trained_MIR_hmm,"2_state_hmm")
+#save_model(trained_MIR_hmm,"2_state_hmm")
 
-hmm3 <- load_model("2_state_hmm")
-
-vanillahmm <- trained_MIR_hmm[[2]]
-
+#hmm3 <- load_model("2_state_hmm")
 
 
 # FUNCTIONS #####################################################################################################################
 
+
+#' Load a Matrix
+#'
+#' This function loads a file as a matrix. It assumes that the first column
+#' contains the rownames and the subsequent columns are the sample identifiers.
+#' Any rows with duplicated row names will be dropped with the first one being
+#' kepted.
+#'
+#' @param clearedData table of jams with genres
+#' @return sequences in STS format
+#' @export
 create_time_sequence <- function(clearedData){
 
   timestamp_sequence <- sqldf("Select user_id, creation_date, genre from clearedData order by user_id, creation_date")
@@ -69,6 +81,7 @@ create_time_sequence <- function(clearedData){
 ## Transforms TSE to STS format (see Traminer description). This function works like the traminer one with the only difference that
 ## empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
 
+#' @export
 TSE_TO_STS2 <- function(TSE_sequence){
 
   # Generate genre list
@@ -87,6 +100,7 @@ TSE_TO_STS2 <- function(TSE_sequence){
   return(sts)
 }
 
+#' @export
 test_model <- function(trained_MIR_hmm,testdata){
 
   results <- matrix(, nrow(testdata), 2)
@@ -105,10 +119,12 @@ test_model <- function(trained_MIR_hmm,testdata){
   return(data.frame(results,stringsAsFactors=F))
 }
 
+#' @export
 calcAccuracy <- function(testresult){
   return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
 }
 
+#' @export
 predict <- function(MIR_hmm, obs){
 
   hmm <- MIR_hmm[[2]]
@@ -138,6 +154,7 @@ predict <- function(MIR_hmm, obs){
   return(sMax)
 }
 
+#' @export
 load_jams <- function(jams_path){
 
   path <- paste(jams_path, "/thisismyjam-datadump/archive/jams.tsv", sep="")
@@ -157,6 +174,7 @@ load_jams <- function(jams_path){
 
 ####################################################################################################################
 
+#' @export
 add_genres_to_jams <- function(jams_clean, LFM_path){
 
   lexicon_path <-  paste(LFM_path, "LFM-1b_UGP/genres_allmusic.txt", sep="")
@@ -237,6 +255,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 
 }
 
+#' @export
 split_data <- function(data, split_ratio = .50){
 
   set.seed(101) # Set Seed so that same sample can be reproduced in future also
@@ -251,6 +270,7 @@ split_data <- function(data, split_ratio = .50){
 
 # big_hmm contains a hidden markov model of the discnp package and one of the hmm package
 
+#' @export
 MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
 
   # Retrieve all genres to pass as symbols argrument to HMM constructor
@@ -281,6 +301,7 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
   value
 }
 
+#' @export
 save_model <- function(model,model_name){
 
 model_path <- paste(model_name, ".rds", sep="")
@@ -289,6 +310,7 @@ saveRDS(model, model_path)
 
 }
 
+#' @export
 load_model <- function(model_name){
 
 model_path <- paste(model_name, ".rds", sep="")
