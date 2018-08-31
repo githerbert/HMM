@@ -15,5 +15,7 @@ save_model(model, model_name)
 This function saves a hidden markov model as serialised object to disk
 }
 \examples{
-save_model("2_state_hmm_1")
+hmm <- load_model("2_state_hmm")
+
+save_model(hmm, "2_state_hmm")
 }

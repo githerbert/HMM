@@ -380,13 +380,15 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
 #' @param model a hidden markov model for music information retrieval created by MIR_hmm class
 #' @param model_name name of the model on disk
 #' @examples
-#' save_model("2_state_hmm_1")
+#' hmm <- load_model("2_state_hmm")
+#'
+#' save_model(hmm, "2_state_hmm")
 #' @export
 save_model <- function(model,model_name){
 
-model_name <- paste("data/", model_name, sep="")
+file_name <- paste(model_name, ".rds", sep="")
 
-model_path <- paste(model_name, ".rds", sep="")
+model_path <- system.file("extdata", file_name, package="hmm.mir")
 
 saveRDS(model, model_path)
 
@@ -404,7 +406,9 @@ saveRDS(model, model_path)
 #' @export
 load_model <- function(model_name){
 
-model_path <- paste(model_name, ".rds", sep="")
+file_name <- paste(model_name, ".rds", sep="")
+
+model_path <- system.file("extdata", file_name, package="hmm.mir")
 
 return(readRDS(model_path))
 
