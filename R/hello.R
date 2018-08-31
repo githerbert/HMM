@@ -16,6 +16,7 @@
 #' @import sqldf
 #' @importFrom hmm.discnp hmm
 #' @importFrom HMM initHMM forward
+#' @importFrom utils read.delim read.table
 NULL
 
 #setwd("S:/")
@@ -143,7 +144,7 @@ calcAccuracy <- function(testresult){
   return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
 }
 
-#' Predict next observations
+#' Predict next observation
 #'
 #' This function predicts the next observation for a given sequence of music genres. This is achieved
 #' by calculating probability by each genre to be the next observation. The genre with the highest
@@ -228,6 +229,8 @@ load_jams <- function(jams_path){
 #' @export
 add_genres_to_jams <- function(jams_clean, LFM_path){
 
+  # Create paths
+
   lexicon_path <-  paste(LFM_path, "LFM-1b_UGP/genres_allmusic.txt", sep="")
 
   artist_genre_path <-  paste(LFM_path, "LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt", sep="")
@@ -247,8 +250,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 
   # Read allmusic Artist table
 
-  #colClasses = c("character", "character", "character", "character", "character", "character", "character","character","character","character","character","character","character","character","character")
-  colClasses = c("character", "character", "character", "character", "character", "character", "character")
+ colClasses = c("character", "character", "character", "character", "character", "character", "character")
 
   allmusic <- read.table(
     artist_genre_path,
@@ -259,7 +261,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 
   allmusic_clean <- subset(allmusic, is.na(V2) == FALSE & V2 != "")
 
-  # Remove columns
+  # Keep ony first genre. This is the genre with the most votes at last.fm
 
   allmusic_clean <- data.frame(artist=allmusic_clean$V1, genre_id=allmusic_clean$V2)
 
@@ -326,7 +328,7 @@ split_data <- function(data, split_ratio = .50){
   return(list)
 }
 
-# big_hmm contains a hidden markov model of the discnp package and one of the hmm package
+# MIR_hmm contains a hidden markov model of the discnp package and one of the hmm package
 
 #' Class to initialise a hidden markov model for music information retrieval
 #'
@@ -378,7 +380,7 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
 #' @param model a hidden markov model for music information retrieval created by MIR_hmm class
 #' @param model_name name of the model on disk
 #' @examples
-#' save_model(2_state_hmm_1)
+#' save_model("2_state_hmm_1")
 #' @export
 save_model <- function(model,model_name){
 
@@ -395,7 +397,8 @@ saveRDS(model, model_path)
 #' @param model_name name of the model on disk
 #' @return a hidden markov model object
 #' @examples
-#' hmm <- load_model(2_state_hmm)
+#' hmm <- load_model("2_state_hmm")
+#' print(hmm)
 #' @export
 load_model <- function(model_name){
 
