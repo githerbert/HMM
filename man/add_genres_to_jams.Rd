@@ -19,3 +19,10 @@ Returns a matrix containing the same columns as the return value of the load_jam
 This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function.
 Preprocessing: jams of users that weren't merged to a genre will be deleted.
 }
+\examples{
+# Example for the case that all datasets are located in S:/
+jams <- load_jams("S:/")
+jams_with_genre <- add_genres_to_jams(jams, "S:/")
+print(jams_with_genre)
+
+}

@@ -8,15 +8,15 @@ MIR_hmm(training_data, K = 2, verbose = TRUE, tolerance = 0.001,
   itmax = 300)
 }
 \arguments{
-\item{training_data}{jam sequences in STS format as returned by the function split_data().}
+\item{training_data}{training dataset as returned by the function split_data().}
 
-\item{K}{Number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.}
+\item{K}{The number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.}
 
-\item{verbose}{Variable determinig if the EM algorithm steps should be printed to console.}
+\item{verbose}{Determines if the single EM algorithm steps should be printed to console.}
 
-\item{tolerance}{Variable determing the at which percentage change in log-likelihood the convergence citeria is met.}
+\item{tolerance}{The percentage change in log-likelihood that determines if the convergence citeria is met.}
 
-\item{itmax}{Variable determinig how many steps the EM algorithm should run at maximum.}
+\item{itmax}{The maximum number of iterations of the EM Algorithm.}
 }
 \value{
 An object of the class MIR_hmm that contains a list of the following hidden markov models:
@@ -27,4 +27,19 @@ An object of the class MIR_hmm that contains a list of the following hidden mark
 This function initialise a hidden markov model for music information retrieval. This includes the initialisation of two hidden markov models.
 One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the training dataset while hmm
 is used for forward function to predict next genres.
+}
+\examples{
+# Example for the case that all datasets are located in S:/
+
+# Prepare data
+jams <- load_jams("S:/")
+jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jam_sequence <- create_time_sequence(jams_with_genre)
+splitted_data <- split_data(jam_sequence)
+training_dataset <- splitted_data[[1]]
+test_dataset <- splitted_data[[2]]
+
+# Train model
+hmm <- MIR_hmm(training_dataset)
+print(hmm)
 }

@@ -21,3 +21,6 @@ returns a matrix of jams containing the following columns
 This function loads the jams.tsv file from the THIS IS MY JAM dataset into R.
 Furthermore users who have at least one corrupted value will be deleted.
 }
+\examples{
+jams <- load_jams("S:/")
+}

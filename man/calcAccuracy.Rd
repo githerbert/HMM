@@ -7,12 +7,12 @@
 calcAccuracy(testresult)
 }
 \arguments{
-\item{testresult}{A matrix containing actual and predicted values as returned by the function test_model()}
+\item{testresult}{A matrix containing actual and predicted values as returned by the function test_model().}
 }
 \value{
-A percentage value between 0 and 1. 0.5 means that 50% were rightly predicted
+A percentage value between 0 and 1. 0.5 means that 50% of the predictions were correct.
 }
 \description{
-The accuracy is calculated by dividing the number of rightly predicted values through
-the total number of values.
+The accuracy is the fraction of predictions that were true. It is calculated by dividing the number of correct predictions through
+the total number of predictions.
 }

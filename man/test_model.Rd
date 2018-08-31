@@ -21,3 +21,18 @@ This function tests a Hidden Markov Model for Music Information retriaval by pre
 the last genre of each sequence in the testdata set. Based on the result of this function
 the accuracy of a model can be calculated with the function calcAccuracy().
 }
+\examples{
+# Example for the case that all datasets are located in S:/
+
+# Prepare data
+jams <- load_jams("S:/")
+jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jam_sequence <- create_time_sequence(jams_with_genre)
+splitted_data <- split_data(jam_sequence)
+training_dataset <- splitted_data[[1]]
+test_dataset <- splitted_data[[2]]
+
+# Train model
+hmm <- MIR_hmm(training_dataset)
+test_results <- test_model(hmm,test_dataset)
+}

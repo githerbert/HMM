@@ -51,6 +51,11 @@ NULL
 #'
 #' @param clearedData A matrix of jams with genres as returned by the function add_genres_to_jams()
 #' @return sequences in STS format
+#' @examples
+#' # Example for the case that all datasets are located in S:/
+#' jams <- load_jams("S:/")
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jam_sequence <- create_time_sequence(jams_with_genre)
 #' @export
 create_time_sequence <- function(clearedData){
 
@@ -115,6 +120,20 @@ TSE_TO_STS2 <- function(TSE_sequence){
 #' @return A matrix that contains the following two values for each row in the testdata:
 #' \item{ACTUAL}{The actual last value of the sequence.}
 #' \item{PREDICTED}{The predicted last value by the Hidden Markov Model.}
+#' @examples
+#' # Example for the case that all datasets are located in S:/
+#'
+#' # Prepare data
+#' jams <- load_jams("S:/")
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jam_sequence <- create_time_sequence(jams_with_genre)
+#' splitted_data <- split_data(jam_sequence)
+#' training_dataset <- splitted_data[[1]]
+#' test_dataset <- splitted_data[[2]]
+#'
+#'# Train model
+#' hmm <- MIR_hmm(training_dataset)
+#' test_results <- test_model(hmm,test_dataset)
 #' @export
 test_model <- function(trained_MIR_hmm,testdata){
 
@@ -136,11 +155,11 @@ test_model <- function(trained_MIR_hmm,testdata){
 
 #' Calculate the accuracy of a model
 #'
-#' The accuracy is calculated by dividing the number of rightly predicted values through
-#' the total number of values.
+#' The accuracy is the fraction of predictions that were true. It is calculated by dividing the number of correct predictions through
+#' the total number of predictions.
 #'
-#' @param testresult A matrix containing actual and predicted values as returned by the function test_model()
-#' @return A percentage value between 0 and 1. 0.5 means that 50% were rightly predicted
+#' @param testresult A matrix containing actual and predicted values as returned by the function test_model().
+#' @return A percentage value between 0 and 1. 0.5 means that 50% of the predictions were correct.
 #' @export
 calcAccuracy <- function(testresult){
   return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
@@ -153,7 +172,7 @@ calcAccuracy <- function(testresult){
 #' probability is considered to be the next favorite genre of a user.
 #'
 #' @param MIR_hmm An object of the class MIR_hmm as returned by MIR_hmm().
-#' @param obs A list of genres.
+#' @param obs A sequence of genres as list.
 #' @return Next probable genre.
 #' @examples
 #' # Load MIR HMM
@@ -206,6 +225,8 @@ predict_next <- function(MIR_hmm, obs){
 #' \item{artist}{Artist of the jam}
 #' \item{title}{Title of song of the jam}
 #' \item{creation_date}{Title of song of the jam}
+#' @examples
+#' jams <- load_jams("S:/")
 #' @export
 load_jams <- function(jams_path){
 
@@ -235,6 +256,12 @@ load_jams <- function(jams_path){
 #' @param LFM_path Path to the location of the unzipped LFM folder
 #' @return Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
 #' \item{genre}{The genre the artist belongs to according to last.fm}
+#' @examples
+#' # Example for the case that all datasets are located in S:/
+#' jams <- load_jams("S:/")
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' print(jams_with_genre)
+#'
 #' @export
 add_genres_to_jams <- function(jams_clean, LFM_path){
 
@@ -317,9 +344,17 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 #'
 #' This function draws a random sample of a dataset as training dataset.
 #'
-#' @param data a matrix containing one sequence per row
-#' @param split_ratio a statement determining how many percent of the original dataset should be used as training dataset
-#' @return a list containing the training dataset at list index 1 and the test dataset at listindex 2
+#' @param data a matrix of sequences in STS format as returend by the function create_time_sequence().
+#' @param split_ratio The split ratio that determines how many percent of the original dataset should be used as training dataset.
+#' @return A list containing the training dataset at list index 1 and the test dataset at list index 2.
+#' @examples
+#' # Example for the case that all datasets are located in S:/
+#' jams <- load_jams("S:/")
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jam_sequence <- create_time_sequence(jams_with_genre)
+#' splitted_data <- split_data(jam_sequence)
+#' training_dataset <- splitted_data[[1]]
+#' test_dataset <- splitted_data[[2]]
 #' @export
 split_data <- function(data, split_ratio = .50){
 
@@ -341,14 +376,28 @@ split_data <- function(data, split_ratio = .50){
 #' One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the training dataset while hmm
 #' is used for forward function to predict next genres.
 #'
-#' @param training_data jam sequences in STS format as returned by the function split_data().
-#' @param K Number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.
-#' @param verbose Variable determinig if the EM algorithm steps should be printed to console.
-#' @param tolerance Variable determing the at which percentage change in log-likelihood the convergence citeria is met.
-#' @param itmax Variable determinig how many steps the EM algorithm should run at maximum.
+#' @param training_data training dataset as returned by the function split_data().
+#' @param K The number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.
+#' @param verbose Determines if the single EM algorithm steps should be printed to console.
+#' @param tolerance The percentage change in log-likelihood that determines if the convergence citeria is met.
+#' @param itmax The maximum number of iterations of the EM Algorithm.
 #' @return An object of the class MIR_hmm that contains a list of the following hidden markov models:
 #' \item{discnp_hmm}{A Hidden Markov Model from the package hmm.discnp.}
 #' \item{hmm}{A Hidden Markov Model from the package HMM.}
+#' @examples
+#' # Example for the case that all datasets are located in S:/
+#'
+#' # Prepare data
+#' jams <- load_jams("S:/")
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jam_sequence <- create_time_sequence(jams_with_genre)
+#' splitted_data <- split_data(jam_sequence)
+#' training_dataset <- splitted_data[[1]]
+#' test_dataset <- splitted_data[[2]]
+#'
+#'# Train model
+#' hmm <- MIR_hmm(training_dataset)
+#' print(hmm)
 #' @export
 MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
 

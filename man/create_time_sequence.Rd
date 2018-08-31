@@ -18,3 +18,9 @@ contains the rownames and the subsequent columns are the sample identifiers.
 Any rows with duplicated row names will be dropped with the first one being
 kept.
 }
+\examples{
+# Example for the case that all datasets are located in S:/
+jams <- load_jams("S:/")
+jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jam_sequence <- create_time_sequence(jams_with_genre)
+}

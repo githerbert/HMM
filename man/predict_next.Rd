@@ -9,7 +9,7 @@ predict_next(MIR_hmm, obs)
 \arguments{
 \item{MIR_hmm}{An object of the class MIR_hmm as returned by MIR_hmm().}
 
-\item{obs}{A list of genres.}
+\item{obs}{A sequence of genres as list.}
 }
 \value{
 Next probable genre.
