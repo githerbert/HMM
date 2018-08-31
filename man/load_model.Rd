@@ -2,18 +2,18 @@
 % Please edit documentation in R/hello.R
 \name{load_model}
 \alias{load_model}
-\title{Loads a Hidden Markov model from disk}
+\title{Load a Hidden Markov model from disk}
 \usage{
 load_model(model_name)
 }
 \arguments{
-\item{model_name}{name of the model on disk}
+\item{model_name}{Name of the model on disk.}
 }
 \value{
-a hidden markov model object
+An object of the class MIR_hmm as returned by MIR_hmm().
 }
 \description{
-This function loads a hidden markov model from disk
+This function loads a saved Hidden Markov Model for Music Information Retrieval from disk.
 }
 \examples{
 hmm <- load_model("2_state_hmm")

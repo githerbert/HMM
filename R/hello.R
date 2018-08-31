@@ -47,9 +47,9 @@ NULL
 #' This function loads a file as a matrix. It assumes that the first column
 #' contains the rownames and the subsequent columns are the sample identifiers.
 #' Any rows with duplicated row names will be dropped with the first one being
-#' kepted.
+#' kept.
 #'
-#' @param clearedData table of jams with genres
+#' @param clearedData A matrix of jams with genres as returned by the function add_genres_to_jams()
 #' @return sequences in STS format
 #' @export
 create_time_sequence <- function(clearedData){
@@ -83,8 +83,8 @@ create_time_sequence <- function(clearedData){
 #' to STS format. This function works like the traminer one with the only difference that
 #' empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
 #'
-#' @param TSE_sequence a matrix in TSE format
-#' @return matrix in STS format
+#' @param TSE_sequence A sequence in TSE format
+#' @return A matrix in STS format containing one sequence per row
 #' @export
 TSE_TO_STS2 <- function(TSE_sequence){
 
@@ -106,13 +106,15 @@ TSE_TO_STS2 <- function(TSE_sequence){
 
 #' Predicts the last value of each sequence in the test dataset
 #'
-#' This function transforms a matrix that contains sequential data in TSE format
-#' to STS format. In comparison with the TSE_TO_STS function of the TRAMINER package
-#' this function keeps NA values and doesn't fills them up with the last non-NA value
+#' This function tests a Hidden Markov Model for Music Information retriaval by predicting
+#' the last genre of each sequence in the testdata set. Based on the result of this function
+#' the accuracy of a model can be calculated with the function calcAccuracy().
 #'
-#' @param trained_MIR_hmm a trained model of the class MIR_hmm
-#' @param testdata testdata as the result of the function split_data()
-#' @return a matrix of the predicted and the actual values
+#' @param trained_MIR_hmm An object of the class MIR_hmm as returned by MIR_hmm().
+#' @param testdata Testdata as returned by the function split_data().
+#' @return A matrix that contains the following two values for each row in the testdata:
+#' \item{ACTUAL}{The actual last value of the sequence.}
+#' \item{PREDICTED}{The predicted last value by the Hidden Markov Model.}
 #' @export
 test_model <- function(trained_MIR_hmm,testdata){
 
@@ -137,22 +139,22 @@ test_model <- function(trained_MIR_hmm,testdata){
 #' The accuracy is calculated by dividing the number of rightly predicted values through
 #' the total number of values.
 #'
-#' @param testresult the result of the function test_model()
-#' @return a percentage value between 0 and 1. 0.5 means that 50% were rightly predicted
+#' @param testresult A matrix containing actual and predicted values as returned by the function test_model()
+#' @return A percentage value between 0 and 1. 0.5 means that 50% were rightly predicted
 #' @export
 calcAccuracy <- function(testresult){
   return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
 }
 
-#' Predict next observation
+#' Predict next genre
 #'
-#' This function predicts the next observation for a given sequence of music genres. This is achieved
-#' by calculating probability by each genre to be the next observation. The genre with the highest
-#' probability is considered to be the next favorite genre of a user
+#' This function predicts the next observation for a given listining history of genres. This is achieved
+#' by calculating probability by each genre to be the next genre. The genre with the highest
+#' probability is considered to be the next favorite genre of a user.
 #'
-#' @param MIR_hmm a object of the s3 class MIR_hmm
-#' @param obs a list of genres
-#' @return predicted genre
+#' @param MIR_hmm An object of the class MIR_hmm as returned by MIR_hmm().
+#' @param obs A list of genres.
+#' @return Next probable genre.
 #' @examples
 #' # Load MIR HMM
 #' hmm <- load_model("2_state_hmm")
@@ -198,7 +200,12 @@ predict_next <- function(MIR_hmm, obs){
 #'
 #'
 #' @param jams_path Path to the location of the unzipped thisismyjam folder
-#' @return table with the jams
+#' @return returns a matrix of jams containing the following columns
+#' \item{jam_id}{Identification number of a jam}
+#' \item{user_id}{Identification number of the user that created the jam}
+#' \item{artist}{Artist of the jam}
+#' \item{title}{Title of song of the jam}
+#' \item{creation_date}{Title of song of the jam}
 #' @export
 load_jams <- function(jams_path){
 
@@ -212,7 +219,7 @@ load_jams <- function(jams_path){
 
   # Remove jams of users who possess at least 1 corrupted value
 
-  jams_clean <- sqldf("select * from jams a where user_id not in jam_users_with_corr_data")
+  jams_clean <- sqldf("select jam_id, user_id, artist, title, creation_date from jams a where user_id not in jam_users_with_corr_data")
 
   return(jams_clean)
 }
@@ -221,11 +228,13 @@ load_jams <- function(jams_path){
 
 #' Add genre to jams
 #'
-#' This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function
+#' This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function.
+#' Preprocessing: jams of users that weren't merged to a genre will be deleted.
 #'
 #' @param jams_clean return value of the loadJams() function
 #' @param LFM_path Path to the location of the unzipped LFM folder
-#' @return table of jams with attached genre
+#' @return Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
+#' \item{genre}{The genre the artist belongs to according to last.fm}
 #' @export
 add_genres_to_jams <- function(jams_clean, LFM_path){
 
@@ -269,22 +278,18 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 
   allmusic <- sqldf("Select artist,max(genre_id) as genre_id from allmusic_clean group by artist")
 
+  # Merge artist with genre
 
   allmusic_merged <- merge(allmusic, allmusic_genres, by = "genre_id")
 
-  #sum(!is.na(allmusic_merged$genre))
 
   jam_artists <- data.frame(artist=unique(jams$artist))
 
   final_table <- merge(x = jam_artists, y = allmusic_merged, by = "artist", all.x = TRUE)
 
-  #length(unique(final_table$Genre))
-
-  #sum(!is.na(final_table$Genre))
-
   artist_genre <- data.frame(artist=final_table$artist, genre=final_table$genre_name)
 
-  # Merge jams with genre
+  # Merge jams with artist_genre
 
   jams_genre <- merge(jams_clean, artist_genre, by = "artist")
 
@@ -332,16 +337,18 @@ split_data <- function(data, split_ratio = .50){
 
 #' Class to initialise a hidden markov model for music information retrieval
 #'
-#' This function initialise a hidden markov model for music information retrieval. This includes two hidden markov models.
-#' One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the model while hmm
-#' is used for forward function to predict next values
+#' This function initialise a hidden markov model for music information retrieval. This includes the initialisation of two hidden markov models.
+#' One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the training dataset while hmm
+#' is used for forward function to predict next genres.
 #'
-#' @param training_data a matrix of sequences
-#' @param K number of hidden states of the hidden markov model for music information retrieval
-#' @param verbose variable determinig if the EM algorithm steps should be printed
-#' @param tolerance variable determing at which percentage change in log-likelihood the convergence citeria is met
-#' @param itmax variable determinig how many steps the EM algorithm should run at maximum
-#' @return a hidden markov model for music information retrieval
+#' @param training_data jam sequences in STS format as returned by the function split_data().
+#' @param K Number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.
+#' @param verbose Variable determinig if the EM algorithm steps should be printed to console.
+#' @param tolerance Variable determing the at which percentage change in log-likelihood the convergence citeria is met.
+#' @param itmax Variable determinig how many steps the EM algorithm should run at maximum.
+#' @return An object of the class MIR_hmm that contains a list of the following hidden markov models:
+#' \item{discnp_hmm}{A Hidden Markov Model from the package hmm.discnp.}
+#' \item{hmm}{A Hidden Markov Model from the package HMM.}
 #' @export
 MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
 
@@ -373,12 +380,12 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
   value
 }
 
-#' Saves Hidden Markov model to disk
+#' Save Hidden Markov model to disk
 #'
-#' This function saves a hidden markov model as serialised object to disk
+#' This function saves a hidden markov model as serialised object (.rds format) to disk.
 #'
-#' @param model a hidden markov model for music information retrieval created by MIR_hmm class
-#' @param model_name name of the model on disk
+#' @param model An object of the class MIR_hmm as returned by MIR_hmm().
+#' @param model_name Name of the model on disk.
 #' @examples
 #' hmm <- load_model("2_state_hmm")
 #'
@@ -394,12 +401,12 @@ saveRDS(model, model_path)
 
 }
 
-#' Loads a Hidden Markov model from disk
+#' Load a Hidden Markov model from disk
 #'
-#' This function loads a hidden markov model from disk
+#' This function loads a saved Hidden Markov Model for Music Information Retrieval from disk.
 #'
-#' @param model_name name of the model on disk
-#' @return a hidden markov model object
+#' @param model_name Name of the model on disk.
+#' @return An object of the class MIR_hmm as returned by MIR_hmm().
 #' @examples
 #' hmm <- load_model("2_state_hmm")
 #' print(hmm)

@@ -8,21 +8,23 @@ MIR_hmm(training_data, K = 2, verbose = TRUE, tolerance = 0.001,
   itmax = 300)
 }
 \arguments{
-\item{training_data}{a matrix of sequences}
+\item{training_data}{jam sequences in STS format as returned by the function split_data().}
 
-\item{K}{number of hidden states of the hidden markov model for music information retrieval}
+\item{K}{Number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.}
 
-\item{verbose}{variable determinig if the EM algorithm steps should be printed}
+\item{verbose}{Variable determinig if the EM algorithm steps should be printed to console.}
 
-\item{tolerance}{variable determing at which percentage change in log-likelihood the convergence citeria is met}
+\item{tolerance}{Variable determing the at which percentage change in log-likelihood the convergence citeria is met.}
 
-\item{itmax}{variable determinig how many steps the EM algorithm should run at maximum}
+\item{itmax}{Variable determinig how many steps the EM algorithm should run at maximum.}
 }
 \value{
-a hidden markov model for music information retrieval
+An object of the class MIR_hmm that contains a list of the following hidden markov models:
+\item{discnp_hmm}{A Hidden Markov Model from the package hmm.discnp.}
+\item{hmm}{A Hidden Markov Model from the package HMM.}
 }
 \description{
-This function initialise a hidden markov model for music information retrieval. This includes two hidden markov models.
-One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the model while hmm
-is used for forward function to predict next values
+This function initialise a hidden markov model for music information retrieval. This includes the initialisation of two hidden markov models.
+One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the training dataset while hmm
+is used for forward function to predict next genres.
 }

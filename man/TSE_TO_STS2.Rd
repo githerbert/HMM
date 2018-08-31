@@ -7,10 +7,10 @@
 TSE_TO_STS2(TSE_sequence)
 }
 \arguments{
-\item{TSE_sequence}{a matrix in TSE format}
+\item{TSE_sequence}{A sequence in TSE format}
 }
 \value{
-matrix in STS format
+A matrix in STS format containing one sequence per row
 }
 \description{
 This function transforms a matrix that contains sequential data in TSE format

@@ -12,8 +12,10 @@ add_genres_to_jams(jams_clean, LFM_path)
 \item{LFM_path}{Path to the location of the unzipped LFM folder}
 }
 \value{
-table of jams with attached genre
+Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
+\item{genre}{The genre the artist belongs to according to last.fm}
 }
 \description{
-This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function
+This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function.
+Preprocessing: jams of users that weren't merged to a genre will be deleted.
 }

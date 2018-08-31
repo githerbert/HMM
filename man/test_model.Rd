@@ -7,15 +7,17 @@
 test_model(trained_MIR_hmm, testdata)
 }
 \arguments{
-\item{trained_MIR_hmm}{a trained model of the class MIR_hmm}
+\item{trained_MIR_hmm}{An object of the class MIR_hmm as returned by MIR_hmm().}
 
-\item{testdata}{testdata as the result of the function split_data()}
+\item{testdata}{Testdata as returned by the function split_data().}
 }
 \value{
-a matrix of the predicted and the actual values
+A matrix that contains the following two values for each row in the testdata:
+\item{ACTUAL}{The actual last value of the sequence.}
+\item{PREDICTED}{The predicted last value by the Hidden Markov Model.}
 }
 \description{
-This function transforms a matrix that contains sequential data in TSE format
-to STS format. In comparison with the TSE_TO_STS function of the TRAMINER package
-this function keeps NA values and doesn't fills them up with the last non-NA value
+This function tests a Hidden Markov Model for Music Information retriaval by predicting
+the last genre of each sequence in the testdata set. Based on the result of this function
+the accuracy of a model can be calculated with the function calcAccuracy().
 }

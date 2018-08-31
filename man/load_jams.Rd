@@ -10,7 +10,12 @@ load_jams(jams_path)
 \item{jams_path}{Path to the location of the unzipped thisismyjam folder}
 }
 \value{
-table with the jams
+returns a matrix of jams containing the following columns
+\item{jam_id}{Identification number of a jam}
+\item{user_id}{Identification number of the user that created the jam}
+\item{artist}{Artist of the jam}
+\item{title}{Title of song of the jam}
+\item{creation_date}{Title of song of the jam}
 }
 \description{
 This function loads the jams.tsv file from the THIS IS MY JAM dataset into R.

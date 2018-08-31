@@ -2,22 +2,22 @@
 % Please edit documentation in R/hello.R
 \name{predict_next}
 \alias{predict_next}
-\title{Predict next observation}
+\title{Predict next genre}
 \usage{
 predict_next(MIR_hmm, obs)
 }
 \arguments{
-\item{MIR_hmm}{a object of the s3 class MIR_hmm}
+\item{MIR_hmm}{An object of the class MIR_hmm as returned by MIR_hmm().}
 
-\item{obs}{a list of genres}
+\item{obs}{A list of genres.}
 }
 \value{
-predicted genre
+Next probable genre.
 }
 \description{
-This function predicts the next observation for a given sequence of music genres. This is achieved
-by calculating probability by each genre to be the next observation. The genre with the highest
-probability is considered to be the next favorite genre of a user
+This function predicts the next observation for a given listining history of genres. This is achieved
+by calculating probability by each genre to be the next genre. The genre with the highest
+probability is considered to be the next favorite genre of a user.
 }
 \examples{
 # Load MIR HMM
