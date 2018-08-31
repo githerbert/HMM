@@ -384,6 +384,8 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
 #' @export
 save_model <- function(model,model_name){
 
+model_name <- paste("data/", model_name, sep="")
+
 model_path <- paste(model_name, ".rds", sep="")
 
 saveRDS(model, model_path)
