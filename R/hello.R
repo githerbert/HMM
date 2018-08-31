@@ -16,10 +16,7 @@
 #' @import sqldf
 #' @importFrom hmm.discnp hmm
 #' @importFrom HMM initHMM forward
-
-library(sqldf)
-library(HMM)
-library(hmm.discnp)
+NULL
 
 #setwd("S:/")
 
@@ -42,11 +39,9 @@ library(hmm.discnp)
 
 #hmm3 <- load_model("2_state_hmm")
 
-
 # FUNCTIONS #####################################################################################################################
 
-
-#' Load a Matrix
+#' Creates a STS time sequence out of jam genre data
 #'
 #' This function loads a file as a matrix. It assumes that the first column
 #' contains the rownames and the subsequent columns are the sample identifiers.
@@ -81,6 +76,14 @@ create_time_sequence <- function(clearedData){
 ## Transforms TSE to STS format (see Traminer description). This function works like the traminer one with the only difference that
 ## empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
 
+#' Transform a TSE timesequence to a STS timesequence
+#'
+#' This function transforms a matrix that contains sequential data in TSE format
+#' to STS format. This function works like the traminer one with the only difference that
+#' empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
+#'
+#' @param TSE_sequence a matrix in TSE format
+#' @return matrix in STS format
 #' @export
 TSE_TO_STS2 <- function(TSE_sequence){
 
@@ -100,6 +103,15 @@ TSE_TO_STS2 <- function(TSE_sequence){
   return(sts)
 }
 
+#' Predicts the last value of each sequence in the test dataset
+#'
+#' This function transforms a matrix that contains sequential data in TSE format
+#' to STS format. In comparison with the TSE_TO_STS function of the TRAMINER package
+#' this function keeps NA values and doesn't fills them up with the last non-NA value
+#'
+#' @param trained_MIR_hmm a trained model of the class MIR_hmm
+#' @param testdata testdata as the result of the function split_data()
+#' @return a matrix of the predicted and the actual values
 #' @export
 test_model <- function(trained_MIR_hmm,testdata){
 
@@ -112,20 +124,44 @@ test_model <- function(trained_MIR_hmm,testdata){
 
     results[row,1] <- testdata[row,lastNonNA]
 
-    results[row,2] <- predict(trained_MIR_hmm,testdata[row,1:(lastNonNA-1)])
+    results[row,2] <- predict_next(trained_MIR_hmm,testdata[row,1:(lastNonNA-1)])
 
   }
 
   return(data.frame(results,stringsAsFactors=F))
 }
 
+#' Calculate the accuracy of a model
+#'
+#' The accuracy is calculated by dividing the number of rightly predicted values through
+#' the total number of values.
+#'
+#' @param testresult the result of the function test_model()
+#' @return a percentage value between 0 and 1. 0.5 means that 50% were rightly predicted
 #' @export
 calcAccuracy <- function(testresult){
   return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
 }
 
+#' Predict next observations
+#'
+#' This function predicts the next observation for a given sequence of music genres. This is achieved
+#' by calculating probability by each genre to be the next observation. The genre with the highest
+#' probability is considered to be the next favorite genre of a user
+#'
+#' @param MIR_hmm a object of the s3 class MIR_hmm
+#' @param obs a list of genres
+#' @return predicted genre
+#' @examples
+#' # Load MIR HMM
+#' hmm <- load_model(2_state_hmm)
+#' # Create sequence of observations
+#' seq <- c("rock","heavy metal", "pop")
+#' # Predict next genre
+#' prediction <- predict_next(hmm,seq)
+#' print(prediction)
 #' @export
-predict <- function(MIR_hmm, obs){
+predict_next <- function(MIR_hmm, obs){
 
   hmm <- MIR_hmm[[2]]
 
@@ -154,6 +190,14 @@ predict <- function(MIR_hmm, obs){
   return(sMax)
 }
 
+#' Load jams from disk
+#'
+#' This function loads the jams.tsv file from the THIS IS MY JAM dataset into R.
+#' Furthermore users who have at least one corrupted value will be deleted.
+#'
+#'
+#' @param jams_path Path to the location of the unzipped thisismyjam folder
+#' @return table with the jams
 #' @export
 load_jams <- function(jams_path){
 
@@ -174,6 +218,13 @@ load_jams <- function(jams_path){
 
 ####################################################################################################################
 
+#' Add genre to jams
+#'
+#' This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function
+#'
+#' @param jams_clean return value of the loadJams() function
+#' @param LFM_path Path to the location of the unzipped LFM folder
+#' @return table of jams with attached genre
 #' @export
 add_genres_to_jams <- function(jams_clean, LFM_path){
 
@@ -255,6 +306,13 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 
 }
 
+#' Split data into training and test dataset
+#'
+#' This function draws a random sample of a dataset as training dataset.
+#'
+#' @param data a matrix containing one sequence per row
+#' @param split_ratio a statement determining how many percent of the original dataset should be used as training dataset
+#' @return a list containing the training dataset at list index 1 and the test dataset at listindex 2
 #' @export
 split_data <- function(data, split_ratio = .50){
 
@@ -270,6 +328,18 @@ split_data <- function(data, split_ratio = .50){
 
 # big_hmm contains a hidden markov model of the discnp package and one of the hmm package
 
+#' Class to initialise a hidden markov model for music information retrieval
+#'
+#' This function initialise a hidden markov model for music information retrieval. This includes two hidden markov models.
+#' One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the model while hmm
+#' is used for forward function to predict next values
+#'
+#' @param training_data a matrix of sequences
+#' @param K number of hidden states of the hidden markov model for music information retrieval
+#' @param verbose variable determinig if the EM algorithm steps should be printed
+#' @param tolerance variable determing at which percentage change in log-likelihood the convergence citeria is met
+#' @param itmax variable determinig how many steps the EM algorithm should run at maximum
+#' @return a hidden markov model for music information retrieval
 #' @export
 MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itmax = 300) {
 
@@ -301,6 +371,14 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
   value
 }
 
+#' Saves Hidden Markov model to disk
+#'
+#' This function saves a hidden markov model as serialised object to disk
+#'
+#' @param model a hidden markov model for music information retrieval created by MIR_hmm class
+#' @param model_name name of the model on disk
+#' @examples
+#' save_model(2_state_hmm_1)
 #' @export
 save_model <- function(model,model_name){
 
@@ -310,6 +388,14 @@ saveRDS(model, model_path)
 
 }
 
+#' Loads a Hidden Markov model from disk
+#'
+#' This function loads a hidden markov model from disk
+#'
+#' @param model_name name of the model on disk
+#' @return a hidden markov model object
+#' @examples
+#' hmm <- load_model(2_state_hmm)
 #' @export
 load_model <- function(model_name){
 
