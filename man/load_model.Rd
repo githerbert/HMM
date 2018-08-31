@@ -16,5 +16,6 @@ a hidden markov model object
 This function loads a hidden markov model from disk
 }
 \examples{
-hmm <- load_model(2_state_hmm)
+hmm <- load_model("2_state_hmm")
+print(hmm)
 }

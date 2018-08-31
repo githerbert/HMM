@@ -2,7 +2,7 @@
 % Please edit documentation in R/hello.R
 \name{predict_next}
 \alias{predict_next}
-\title{Predict next observations}
+\title{Predict next observation}
 \usage{
 predict_next(MIR_hmm, obs)
 }
