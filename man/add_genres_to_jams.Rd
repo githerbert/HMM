@@ -4,12 +4,14 @@
 \alias{add_genres_to_jams}
 \title{Add genre to jams}
 \usage{
-add_genres_to_jams(jams_clean, LFM_path)
+add_genres_to_jams(jams_clean, LFM_path, loadExample = FALSE)
 }
 \arguments{
 \item{jams_clean}{return value of the loadJams() function}
 
 \item{LFM_path}{Path to the location of the unzipped LFM folder}
+
+\item{loadExample}{If set to true this checks only the validity of the function. The first argument will be ignored}
 }
 \value{
 Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
@@ -21,8 +23,8 @@ Preprocessing: jams of users that weren't merged to a genre will be deleted.
 }
 \examples{
 # Example for the case that all datasets are located in S:/
-jams <- load_jams("S:/")
-jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jams <- load_jams("S:/", loadExample = TRUE)
+jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 print(jams_with_genre)
 
 }

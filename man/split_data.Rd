@@ -19,8 +19,8 @@ This function draws a random sample of a dataset as training dataset.
 }
 \examples{
 # Example for the case that all datasets are located in S:/
-jams <- load_jams("S:/")
-jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jams <- load_jams("S:/", loadExample = TRUE)
+jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 jam_sequence <- create_time_sequence(jams_with_genre)
 splitted_data <- split_data(jam_sequence)
 training_dataset <- splitted_data[[1]]

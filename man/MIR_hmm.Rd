@@ -2,7 +2,7 @@
 % Please edit documentation in R/hello.R
 \name{MIR_hmm}
 \alias{MIR_hmm}
-\title{Class to initialise a hidden markov model for music information retrieval}
+\title{Initialise a hidden markov model for music information retrieval with training data}
 \usage{
 MIR_hmm(training_data, K = 2, verbose = TRUE, tolerance = 0.001,
   itmax = 300)
@@ -24,16 +24,16 @@ An object of the class MIR_hmm that contains a list of the following hidden mark
 \item{hmm}{A Hidden Markov Model from the package HMM.}
 }
 \description{
-This function initialise a hidden markov model for music information retrieval. This includes the initialisation of two hidden markov models.
-One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the training dataset while hmm
-is used for forward function to predict next genres.
+This function initialise a Hidden Markov Model for music information retrieval. Thereby the model is basically a wrapper
+for two other HMM classes of different packages. The HMM package and the hmm.discnp package. hmm.discnp is used for fitting
+the model to the training dataset while hmm is used to predict next genres.
 }
 \examples{
 # Example for the case that all datasets are located in S:/
 
 # Prepare data
-jams <- load_jams("S:/")
-jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jams <- load_jams("S:/", loadExample = TRUE)
+jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 jam_sequence <- create_time_sequence(jams_with_genre)
 splitted_data <- split_data(jam_sequence)
 training_dataset <- splitted_data[[1]]

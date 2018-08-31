@@ -2,7 +2,7 @@
 % Please edit documentation in R/hello.R
 \name{create_time_sequence}
 \alias{create_time_sequence}
-\title{Creates a STS time sequence out of jam genre data}
+\title{Creates time sequences out of jam genre data}
 \usage{
 create_time_sequence(clearedData)
 }
@@ -10,17 +10,16 @@ create_time_sequence(clearedData)
 \item{clearedData}{A matrix of jams with genres as returned by the function add_genres_to_jams()}
 }
 \value{
-sequences in STS format
+sequences in STS (state sequences) format which contains one sequence per row
 }
 \description{
-This function loads a file as a matrix. It assumes that the first column
-contains the rownames and the subsequent columns are the sample identifiers.
-Any rows with duplicated row names will be dropped with the first one being
-kept.
+This function transforms the jam data with the attached genres into the time sequence format STS (state sequences). In comparison
+to the original jam genre data that contains one observation per row the STS format contains one whole sequence per row. This function
+needs to applied to the jam data to proceed them further.
 }
 \examples{
 # Example for the case that all datasets are located in S:/
-jams <- load_jams("S:/")
-jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jams <- load_jams("S:/", loadExample = TRUE)
+jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 jam_sequence <- create_time_sequence(jams_with_genre)
 }

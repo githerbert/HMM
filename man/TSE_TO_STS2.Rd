@@ -13,7 +13,9 @@ TSE_TO_STS2(TSE_sequence)
 A matrix in STS format containing one sequence per row
 }
 \description{
-This function transforms a matrix that contains sequential data in TSE format
-to STS format. This function works like the traminer one with the only difference that
-empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
+This function transforms a matrix that contains sequential data in TSE (time stamped event sequences) format
+to a matrix in STS (state sequences) format. This function works like the TSE_TO_STS() function of the TraMineRextras package but differs
+in two points: If the passed dataset contains a sequence that is shorter than the longest sequence of the dataset TraMineRextras fills the
+missing values with the last non missing value. This function will not do this and let the missing values be NA. Furthermore it doesn't have
+a first state at the first value in the sequence.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/hello.R
 \name{test_model}
 \alias{test_model}
-\title{Predicts the last value of each sequence in the test dataset}
+\title{Test trained Hidden Markov Model with test data}
 \usage{
 test_model(trained_MIR_hmm, testdata)
 }
@@ -25,8 +25,8 @@ the accuracy of a model can be calculated with the function calcAccuracy().
 # Example for the case that all datasets are located in S:/
 
 # Prepare data
-jams <- load_jams("S:/")
-jams_with_genre <- add_genres_to_jams(jams, "S:/")
+jams <- load_jams("S:/", loadExample = TRUE)
+jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 jam_sequence <- create_time_sequence(jams_with_genre)
 splitted_data <- split_data(jam_sequence)
 training_dataset <- splitted_data[[1]]

@@ -42,19 +42,18 @@ NULL
 
 # FUNCTIONS #####################################################################################################################
 
-#' Creates a STS time sequence out of jam genre data
+#' Creates time sequences out of jam genre data
 #'
-#' This function loads a file as a matrix. It assumes that the first column
-#' contains the rownames and the subsequent columns are the sample identifiers.
-#' Any rows with duplicated row names will be dropped with the first one being
-#' kept.
+#' This function transforms the jam data with the attached genres into the time sequence format STS (state sequences). In comparison
+#' to the original jam genre data that contains one observation per row the STS format contains one whole sequence per row. This function
+#' needs to applied to the jam data to proceed them further.
 #'
 #' @param clearedData A matrix of jams with genres as returned by the function add_genres_to_jams()
-#' @return sequences in STS format
+#' @return sequences in STS (state sequences) format which contains one sequence per row
 #' @examples
 #' # Example for the case that all datasets are located in S:/
-#' jams <- load_jams("S:/")
-#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jams <- load_jams("S:/", loadExample = TRUE)
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 #' jam_sequence <- create_time_sequence(jams_with_genre)
 #' @export
 create_time_sequence <- function(clearedData){
@@ -69,7 +68,7 @@ create_time_sequence <- function(clearedData){
 
   timestamp_sequence <- transform(timestamp_sequence,id=as.numeric(factor(user_id)))
 
-  # Create data for tse sequence
+  # Create TSE time sequence
 
   timestamp_sequence <- sqldf("Select id,timestamp,genre as event from timestamp_sequence")
 
@@ -84,9 +83,11 @@ create_time_sequence <- function(clearedData){
 
 #' Transform a TSE timesequence to a STS timesequence
 #'
-#' This function transforms a matrix that contains sequential data in TSE format
-#' to STS format. This function works like the traminer one with the only difference that
-#' empty cells won't be filled with the value of the last non NA cell but with NA values. Furthermore it doesn't have initial state
+#' This function transforms a matrix that contains sequential data in TSE (time stamped event sequences) format
+#' to a matrix in STS (state sequences) format. This function works like the TSE_TO_STS() function of the TraMineRextras package but differs
+#' in two points: If the passed dataset contains a sequence that is shorter than the longest sequence of the dataset TraMineRextras fills the
+#' missing values with the last non missing value. This function will not do this and let the missing values be NA. Furthermore it doesn't have
+#' a first state at the first value in the sequence.
 #'
 #' @param TSE_sequence A sequence in TSE format
 #' @return A matrix in STS format containing one sequence per row
@@ -109,7 +110,7 @@ TSE_TO_STS2 <- function(TSE_sequence){
   return(sts)
 }
 
-#' Predicts the last value of each sequence in the test dataset
+#' Test trained Hidden Markov Model with test data
 #'
 #' This function tests a Hidden Markov Model for Music Information retriaval by predicting
 #' the last genre of each sequence in the testdata set. Based on the result of this function
@@ -124,8 +125,8 @@ TSE_TO_STS2 <- function(TSE_sequence){
 #' # Example for the case that all datasets are located in S:/
 #'
 #' # Prepare data
-#' jams <- load_jams("S:/")
-#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jams <- load_jams("S:/", loadExample = TRUE)
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 #' jam_sequence <- create_time_sequence(jams_with_genre)
 #' splitted_data <- split_data(jam_sequence)
 #' training_dataset <- splitted_data[[1]]
@@ -219,6 +220,7 @@ predict_next <- function(MIR_hmm, obs){
 #'
 #'
 #' @param jams_path Path to the location of the unzipped thisismyjam folder
+#' @param loadExample If set to true this checks only the validity of the function. The first argument will be ignored
 #' @return returns a matrix of jams containing the following columns
 #' \item{jam_id}{Identification number of a jam}
 #' \item{user_id}{Identification number of the user that created the jam}
@@ -226,18 +228,23 @@ predict_next <- function(MIR_hmm, obs){
 #' \item{title}{Title of song of the jam}
 #' \item{creation_date}{Title of song of the jam}
 #' @examples
-#' jams <- load_jams("S:/")
+#' jams <- load_jams("S:/", loadExample = TRUE)
 #' @export
-load_jams <- function(jams_path){
+load_jams <- function(jams_path, loadExample = FALSE){
 
   path <- paste(jams_path, "/thisismyjam-datadump/archive/jams.tsv", sep="")
+
+  if(loadExample){
+    path <- system.file("extdata", "jams_example.tsv", package="hmm.mir")
+
+  }
 
   jams <- read.delim(
     path,
     sep="\t", header=TRUE, fill=TRUE, quote="", colClasses = c("character", "character", "character", "character", "character", "character", "character"))
+
   jam_artists <- data.frame(artist=unique(jams$artist))
   jam_users_with_corr_data <- sqldf('SELECT user_id FROM jams where creation_date = "" or artist = "" or title = "" or length(jam_id) <> 32')
-
   # Remove jams of users who possess at least 1 corrupted value
 
   jams_clean <- sqldf("select jam_id, user_id, artist, title, creation_date from jams a where user_id not in jam_users_with_corr_data")
@@ -254,22 +261,29 @@ load_jams <- function(jams_path){
 #'
 #' @param jams_clean return value of the loadJams() function
 #' @param LFM_path Path to the location of the unzipped LFM folder
+#' @param loadExample If set to true this checks only the validity of the function. The first argument will be ignored
 #' @return Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
 #' \item{genre}{The genre the artist belongs to according to last.fm}
 #' @examples
 #' # Example for the case that all datasets are located in S:/
-#' jams <- load_jams("S:/")
-#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jams <- load_jams("S:/", loadExample = TRUE)
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 #' print(jams_with_genre)
 #'
 #' @export
-add_genres_to_jams <- function(jams_clean, LFM_path){
+add_genres_to_jams <- function(jams_clean, LFM_path, loadExample = FALSE){
 
   # Create paths
 
   lexicon_path <-  paste(LFM_path, "LFM-1b_UGP/genres_allmusic.txt", sep="")
 
   artist_genre_path <-  paste(LFM_path, "LFM-1b_UGP/LFM-1b_artist_genres_allmusic.txt", sep="")
+
+  if(loadExample){
+    lexicon_path <- system.file("extdata", "genres_allmusic.txt", package="hmm.mir")
+
+    artist_genre_path <- system.file("extdata", "artist_genre_example.txt", package="hmm.mir")
+  }
 
   # Read allmusic genre lexicon
 
@@ -329,12 +343,15 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
   users_without_genre <- subset(jams_genre, is.na(genre) == TRUE)
   # Recieve the first jam of a jam sequence that has no genre
   users_without_genre2 <- sqldf('SELECT user_id, min(creation_date) as creation_date FROM users_without_genre group by user_id')
-
+  if(nrow(users_without_genre2)>0){
   final_data <- sqldf('SELECT * FROM jams_genre a left join users_without_genre2 b on a.user_id = b.user_id where b.user_id = null or b.creation_date > a.creation_date')
+  }else{
+  final_data <- jams_genre
+  }
 
   # Keep data of users that have at least 2 jams
 
-  final_data_clean <- sqldf('select * from final_data a where user_id in (Select user_id from final_data group by user_id having count(user_id) >= 2)')
+  final_data_clean <- sqldf('select jam_id, user_id, artist, title, creation_date, genre from final_data a where user_id in (Select user_id from final_data group by user_id having count(user_id) >= 2)')
 
   return (final_data_clean)
 
@@ -349,8 +366,8 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 #' @return A list containing the training dataset at list index 1 and the test dataset at list index 2.
 #' @examples
 #' # Example for the case that all datasets are located in S:/
-#' jams <- load_jams("S:/")
-#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jams <- load_jams("S:/", loadExample = TRUE)
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 #' jam_sequence <- create_time_sequence(jams_with_genre)
 #' splitted_data <- split_data(jam_sequence)
 #' training_dataset <- splitted_data[[1]]
@@ -370,11 +387,11 @@ split_data <- function(data, split_ratio = .50){
 
 # MIR_hmm contains a hidden markov model of the discnp package and one of the hmm package
 
-#' Class to initialise a hidden markov model for music information retrieval
+#' Initialise a hidden markov model for music information retrieval with training data
 #'
-#' This function initialise a hidden markov model for music information retrieval. This includes the initialisation of two hidden markov models.
-#' One of the HMM package and one of the hmm.discnp package. hmm.discnp is used for fitting the data to the training dataset while hmm
-#' is used for forward function to predict next genres.
+#' This function initialise a Hidden Markov Model for music information retrieval. Thereby the model is basically a wrapper
+#' for two other HMM classes of different packages. The HMM package and the hmm.discnp package. hmm.discnp is used for fitting
+#' the model to the training dataset while hmm is used to predict next genres.
 #'
 #' @param training_data training dataset as returned by the function split_data().
 #' @param K The number of hidden states of the hidden markov model. See also hmm.discnp documentation for further information.
@@ -388,8 +405,8 @@ split_data <- function(data, split_ratio = .50){
 #' # Example for the case that all datasets are located in S:/
 #'
 #' # Prepare data
-#' jams <- load_jams("S:/")
-#' jams_with_genre <- add_genres_to_jams(jams, "S:/")
+#' jams <- load_jams("S:/", loadExample = TRUE)
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
 #' jam_sequence <- create_time_sequence(jams_with_genre)
 #' splitted_data <- split_data(jam_sequence)
 #' training_dataset <- splitted_data[[1]]
@@ -403,8 +420,13 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
 
   # Retrieve all genres to pass as symbols argrument to HMM constructor
 
-  allmusic_genres <- unique(c(training_data))
-  allmusic_genres <- as.character(allmusic_genres[!is.na(allmusic_genres)])
+  genres_path <- system.file("extdata", "genres_allmusic.txt", package="hmm.mir")
+
+  allmusic_lexicon <- read.delim(
+    genres_path,
+    sep="\t", header=FALSE, quote="", fill=TRUE, encoding = "utf-8")
+
+  allmusic_genres <- as.character(unique(allmusic_lexicon$V1))
 
   # Create list of state names
 

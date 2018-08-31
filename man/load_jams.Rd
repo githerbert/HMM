@@ -4,10 +4,12 @@
 \alias{load_jams}
 \title{Load jams from disk}
 \usage{
-load_jams(jams_path)
+load_jams(jams_path, loadExample = FALSE)
 }
 \arguments{
 \item{jams_path}{Path to the location of the unzipped thisismyjam folder}
+
+\item{loadExample}{If set to true this checks only the validity of the function. The first argument will be ignored}
 }
 \value{
 returns a matrix of jams containing the following columns
@@ -22,5 +24,5 @@ This function loads the jams.tsv file from the THIS IS MY JAM dataset into R.
 Furthermore users who have at least one corrupted value will be deleted.
 }
 \examples{
-jams <- load_jams("S:/")
+jams <- load_jams("S:/", loadExample = TRUE)
 }
