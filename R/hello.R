@@ -155,7 +155,7 @@ calcAccuracy <- function(testresult){
 #' @return predicted genre
 #' @examples
 #' # Load MIR HMM
-#' hmm <- load_model(2_state_hmm)
+#' hmm <- load_model("2_state_hmm")
 #' # Create sequence of observations
 #' seq <- c("rock","heavy metal", "pop")
 #' # Predict next genre
@@ -259,7 +259,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path){
 
   # Remove Artists without a genre
 
-  allmusic_clean <- subset(allmusic, is.na(V2) == FALSE & V2 != "")
+  allmusic_clean <- subset(allmusic, is.na(allmusic$V2) == FALSE & allmusic$V2 != "")
 
   # Keep ony first genre. This is the genre with the most votes at last.fm
 
@@ -359,7 +359,7 @@ MIR_hmm <- function(training_data, K = 2, verbose = TRUE, tolerance = 0.001, itm
     state_names <- c(state_names, state_name)
   }
 
-  # Transforms training data which is in STS format to list of vectors
+  # Transforms training data which is in STS format to a list of vectors since discnp hmm function only accepts this format as input
   training_list <- as.list(data.frame(t(training_data)))
 
   # Train discnp model

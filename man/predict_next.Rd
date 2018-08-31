@@ -21,7 +21,7 @@ probability is considered to be the next favorite genre of a user
 }
 \examples{
 # Load MIR HMM
-hmm <- load_model(2_state_hmm)
+hmm <- load_model("2_state_hmm")
 # Create sequence of observations
 seq <- c("rock","heavy metal", "pop")
 # Predict next genre
