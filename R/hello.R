@@ -66,7 +66,8 @@ create_time_sequence <- function(clearedData){
 #' to a matrix in STS (state sequences) format. This function works like the TSE_TO_STS() function of the TraMineRextras package but differs
 #' in two points: If the passed dataset contains a sequence that is shorter than the longest sequence of the dataset TraMineRextras fills the
 #' missing values with the last non missing value. This function will not do this and let the missing values be NA. Furthermore it doesn't have
-#' a first state at the first value in the sequence.
+#' a first state at the first value in the sequence. Please note that it is not necessary to use the function manually since the function is called
+#' from the create_time_sequence() function.
 #'
 #' @param TSE_sequence A sequence in TSE format
 #' @return A matrix in STS format containing one sequence per row
@@ -148,7 +149,7 @@ calcAccuracy <- function(testresult){
 #' Predict next genre
 #'
 #' This function predicts the next observation for a given listining history of genres. This is achieved
-#' by calculating probability of each genre to be the next genre. The genre with the highest
+#' by calculating probability of each genre to be the next genre. This is done with the forward algorithm. The genre with the highest
 #' probability is considered to be the next favorite genre of a user.
 #'
 #' @param MIR_hmm An object of the class MIR_hmm as returned by MIR_hmm().
@@ -242,7 +243,7 @@ load_jams <- function(jams_path, loadExample = FALSE){
 #' before this jam will be kept while all following jams will be deleted. Furthermore users with less than 2 jams will be deleted since they
 #' carry no useful information for the later training procedure of the Hidden Markov Model.
 #'
-#' @param jams_clean return value of the loadJams() function.
+#' @param jams_clean Return value of the loadJams() function.
 #' @param LFM_path Path to the location of the unzipped LFM folder.
 #' @param loadExample If set to TRUE only example data will be loaded. This is mainly used to test the package.
 #' @return Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:

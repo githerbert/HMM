@@ -17,5 +17,6 @@ This function transforms a matrix that contains sequential data in TSE (time sta
 to a matrix in STS (state sequences) format. This function works like the TSE_TO_STS() function of the TraMineRextras package but differs
 in two points: If the passed dataset contains a sequence that is shorter than the longest sequence of the dataset TraMineRextras fills the
 missing values with the last non missing value. This function will not do this and let the missing values be NA. Furthermore it doesn't have
-a first state at the first value in the sequence.
+a first state at the first value in the sequence. Please note that it is not necessary to use the function manually since the function is called
+from the create_time_sequence() function.
 }

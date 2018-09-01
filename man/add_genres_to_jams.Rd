@@ -7,7 +7,7 @@
 add_genres_to_jams(jams_clean, LFM_path, loadExample = FALSE)
 }
 \arguments{
-\item{jams_clean}{return value of the loadJams() function.}
+\item{jams_clean}{Return value of the loadJams() function.}
 
 \item{LFM_path}{Path to the location of the unzipped LFM folder.}
 
