@@ -15,7 +15,7 @@ split_data(data, split_ratio = 0.5)
 A list containing the training dataset at list index 1 and the test dataset at list index 2.
 }
 \description{
-This function draws a random sample of a dataset as training dataset.
+This function draws a random sample of a dataset as training dataset. The remaining non-drawn rows of the dataset will be the test dataset.
 }
 \examples{
 # Example for the case that all datasets are located in S:/

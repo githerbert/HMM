@@ -7,21 +7,22 @@
 load_jams(jams_path, loadExample = FALSE)
 }
 \arguments{
-\item{jams_path}{Path to the location of the unzipped thisismyjam folder}
+\item{jams_path}{Path to the location of the unzipped thisismyjam folder.}
 
-\item{loadExample}{If set to true this checks only the validity of the function. The first argument will be ignored}
+\item{loadExample}{If set to TRUE only example data will be loaded. This is mainly used to test the package.}
 }
 \value{
-returns a matrix of jams containing the following columns
-\item{jam_id}{Identification number of a jam}
-\item{user_id}{Identification number of the user that created the jam}
-\item{artist}{Artist of the jam}
-\item{title}{Title of song of the jam}
-\item{creation_date}{Title of song of the jam}
+Returns a matrix of jams containing the following columns.
+\item{jam_id}{Identification number of a jam.}
+\item{user_id}{Identification number of the user that created the jam.}
+\item{artist}{Artist of the jam.}
+\item{title}{Title of song of the jam.}
+\item{creation_date}{Title of song of the jam.}
 }
 \description{
 This function loads the jams.tsv file from the THIS IS MY JAM dataset into R.
-Furthermore users who have at least one corrupted value will be deleted.
+Furthermore if a user has at least one corrupted value in one of their jams (e.g. missing value) all the jams
+of the affected user will be deleted.
 }
 \examples{
 jams <- load_jams("S:/", loadExample = TRUE)

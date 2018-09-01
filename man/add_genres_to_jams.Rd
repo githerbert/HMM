@@ -7,19 +7,22 @@
 add_genres_to_jams(jams_clean, LFM_path, loadExample = FALSE)
 }
 \arguments{
-\item{jams_clean}{return value of the loadJams() function}
+\item{jams_clean}{return value of the loadJams() function.}
 
-\item{LFM_path}{Path to the location of the unzipped LFM folder}
+\item{LFM_path}{Path to the location of the unzipped LFM folder.}
 
-\item{loadExample}{If set to true this checks only the validity of the function. The first argument will be ignored}
+\item{loadExample}{If set to TRUE only example data will be loaded. This is mainly used to test the package.}
 }
 \value{
 Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
-\item{genre}{The genre the artist belongs to according to last.fm}
+\item{genre}{The genre the artist belongs to according to last.fm.}
 }
 \description{
-This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function.
-Preprocessing: jams of users that weren't merged to a genre will be deleted.
+This function loads the genres of the artist from the LFM-1b UGP dataset and merge them with the jams recieved from loadJams() function.
+Jam which do not have a genre after the merge will be treated as follows: A user usually has more than one jam associated with himself.
+Therefore all of his jams can be treated as a sequence. In this sequence the first jam with no genre will be detemined. All jams that come
+before this jam will be kept while all following jams will be deleted. Furthermore users with less than 2 jams will be deleted since they
+carry no useful information for the later training procedure of the Hidden Markov Model.
 }
 \examples{
 # Example for the case that all datasets are located in S:/

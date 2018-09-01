@@ -16,7 +16,7 @@ Next probable genre.
 }
 \description{
 This function predicts the next observation for a given listining history of genres. This is achieved
-by calculating probability by each genre to be the next genre. The genre with the highest
+by calculating probability of each genre to be the next genre. The genre with the highest
 probability is considered to be the next favorite genre of a user.
 }
 \examples{

@@ -19,27 +19,6 @@
 #' @importFrom utils read.delim read.table
 NULL
 
-#setwd("S:/")
-
-#jams <- load_jams("S:/")
-
-#jams_genre <- add_genres_to_jams(jams,"S:/")
-
-#timestamp_sequence <- create_time_sequence(jams_genre)
-
-# Split data into training and test
-
-#splitted_data <- split_data(timestamp_sequence)
-
-#train <- splitted_data[[1]]
-#test  <- splitted_data[[2]]
-
-#trained_MIR_hmm <- MIR_hmm(train, tolerance = 0.001)
-
-#save_model(trained_MIR_hmm,"2_state_hmm")
-
-#hmm3 <- load_model("2_state_hmm")
-
 # FUNCTIONS #####################################################################################################################
 
 #' Creates time sequences out of jam genre data
@@ -169,7 +148,7 @@ calcAccuracy <- function(testresult){
 #' Predict next genre
 #'
 #' This function predicts the next observation for a given listining history of genres. This is achieved
-#' by calculating probability by each genre to be the next genre. The genre with the highest
+#' by calculating probability of each genre to be the next genre. The genre with the highest
 #' probability is considered to be the next favorite genre of a user.
 #'
 #' @param MIR_hmm An object of the class MIR_hmm as returned by MIR_hmm().
@@ -216,17 +195,18 @@ predict_next <- function(MIR_hmm, obs){
 #' Load jams from disk
 #'
 #' This function loads the jams.tsv file from the THIS IS MY JAM dataset into R.
-#' Furthermore users who have at least one corrupted value will be deleted.
+#' Furthermore if a user has at least one corrupted value in one of their jams (e.g. missing value) all the jams
+#' of the affected user will be deleted.
 #'
 #'
-#' @param jams_path Path to the location of the unzipped thisismyjam folder
-#' @param loadExample If set to true this checks only the validity of the function. The first argument will be ignored
-#' @return returns a matrix of jams containing the following columns
-#' \item{jam_id}{Identification number of a jam}
-#' \item{user_id}{Identification number of the user that created the jam}
-#' \item{artist}{Artist of the jam}
-#' \item{title}{Title of song of the jam}
-#' \item{creation_date}{Title of song of the jam}
+#' @param jams_path Path to the location of the unzipped thisismyjam folder.
+#' @param loadExample If set to TRUE only example data will be loaded. This is mainly used to test the package.
+#' @return Returns a matrix of jams containing the following columns.
+#' \item{jam_id}{Identification number of a jam.}
+#' \item{user_id}{Identification number of the user that created the jam.}
+#' \item{artist}{Artist of the jam.}
+#' \item{title}{Title of song of the jam.}
+#' \item{creation_date}{Title of song of the jam.}
 #' @examples
 #' jams <- load_jams("S:/", loadExample = TRUE)
 #' @export
@@ -256,14 +236,17 @@ load_jams <- function(jams_path, loadExample = FALSE){
 
 #' Add genre to jams
 #'
-#' This function loads the genres of the artist from the XXX dataset and merge them with the jams recieved from loadJams() function.
-#' Preprocessing: jams of users that weren't merged to a genre will be deleted.
+#' This function loads the genres of the artist from the LFM-1b UGP dataset and merge them with the jams recieved from loadJams() function.
+#' Jam which do not have a genre after the merge will be treated as follows: A user usually has more than one jam associated with himself.
+#' Therefore all of his jams can be treated as a sequence. In this sequence the first jam with no genre will be detemined. All jams that come
+#' before this jam will be kept while all following jams will be deleted. Furthermore users with less than 2 jams will be deleted since they
+#' carry no useful information for the later training procedure of the Hidden Markov Model.
 #'
-#' @param jams_clean return value of the loadJams() function
-#' @param LFM_path Path to the location of the unzipped LFM folder
-#' @param loadExample If set to true this checks only the validity of the function. The first argument will be ignored
+#' @param jams_clean return value of the loadJams() function.
+#' @param LFM_path Path to the location of the unzipped LFM folder.
+#' @param loadExample If set to TRUE only example data will be loaded. This is mainly used to test the package.
 #' @return Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
-#' \item{genre}{The genre the artist belongs to according to last.fm}
+#' \item{genre}{The genre the artist belongs to according to last.fm.}
 #' @examples
 #' # Example for the case that all datasets are located in S:/
 #' jams <- load_jams("S:/", loadExample = TRUE)
@@ -344,6 +327,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path, loadExample = FALSE){
   # Recieve the first jam of a jam sequence that has no genre
   users_without_genre2 <- sqldf('SELECT user_id, min(creation_date) as creation_date FROM users_without_genre group by user_id')
   if(nrow(users_without_genre2)>0){
+  # Keep only jams of the sequence that are positioned before the first jam without a genre.
   final_data <- sqldf('SELECT * FROM jams_genre a left join users_without_genre2 b on a.user_id = b.user_id where b.user_id = null or b.creation_date > a.creation_date')
   }else{
   final_data <- jams_genre
@@ -359,7 +343,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path, loadExample = FALSE){
 
 #' Split data into training and test dataset
 #'
-#' This function draws a random sample of a dataset as training dataset.
+#' This function draws a random sample of a dataset as training dataset. The remaining non-drawn rows of the dataset will be the test dataset.
 #'
 #' @param data a matrix of sequences in STS format as returend by the function create_time_sequence().
 #' @param split_ratio The split ratio that determines how many percent of the original dataset should be used as training dataset.
