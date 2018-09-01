@@ -143,7 +143,7 @@ test_model <- function(trained_MIR_hmm,testdata){
 #' @return A percentage value between 0 and 1. 0.5 means that 50% of the predictions were correct.
 #' @export
 calcAccuracy <- function(testresult){
-  return(nrow(model_test[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
+  return(nrow(testresult[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
 }
 
 #' Predict next genre
@@ -308,7 +308,7 @@ add_genres_to_jams <- function(jams_clean, LFM_path, loadExample = FALSE){
   allmusic_merged <- merge(allmusic, allmusic_genres, by = "genre_id")
 
 
-  jam_artists <- data.frame(artist=unique(jams$artist))
+  jam_artists <- data.frame(artist=unique(jams_clean$artist))
 
   final_table <- merge(x = jam_artists, y = allmusic_merged, by = "artist", all.x = TRUE)
 

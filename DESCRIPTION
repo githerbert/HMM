@@ -14,3 +14,4 @@ Imports:
 	HMM (>= 0.1.0),
 	sqldf
 RoxygenNote: 6.1.0
+Suggests: testthat
