@@ -1,12 +1,12 @@
 # hmm.mir
 This project uses Hidden Markov Models to give music recommendations on genres
 
-# To use the package download the following files and unzip them:
+## To use the package download the following files and unzip them:
 https://archive.org/download/thisismyjam-datadump/thisismyjam-datadump.zip
 
 http://www.cp.jku.at/datasets/LFM-1b/LFM-1b_UGP.zip
 
-# Use the package
+## Use the package
 
 The following code reads the dataset, trains a Hidden Markov Model, tests the model and prints its accuracy.
 
@@ -24,7 +24,7 @@ The following code reads the dataset, trains a Hidden Markov Model, tests the mo
     # Calculate accuracy
     print(calcAccuracy(test_results))
 
-# Use Case: Predict the next genre based on your own listening history
+## Use Case: Predict the next genre based on your own listening history
 
 Assuming you listened to rock, heavy metal and pop in this order
 
@@ -35,3 +35,12 @@ Assuming you listened to rock, heavy metal and pop in this order
     # Predict next genre
     prediction <- predict_next(hmm,seq)
     print(prediction)
+    
+## Reference
+
+Authors of the datasets:
+
+\[1\] Jansson A., Raffel C., and Weyde T. 2015. "This is my Jam -- Data Dump", in 16th International Society for Music Information Retrieval Conference Late Breaking and Demo Papers, 2015.
+
+\[2\] Schedl, M. and Ferwerda, B. 2017. Large-scale Analysis of Group-specific Music Genre Taste From Collaborative Tags. Proceedings of the 19th IEEE International Symposium on Multimedia (ISM 2017), Taichung, Taiwan, December 2017.
+
