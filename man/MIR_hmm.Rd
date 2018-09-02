@@ -25,7 +25,7 @@ An object of the class MIR_hmm that contains a list of the following hidden mark
 }
 \description{
 This function initialise a Hidden Markov Model for music information retrieval. Thereby the model is basically a wrapper
-for two other HMM classes of different packages. The HMM package and the hmm.discnp package. hmm.discnp is used for fitting
+for two other HMM objects of different packages. The HMM package and the hmm.discnp package. hmm.discnp is used for fitting
 the model to the training dataset while hmm is used to predict next genres.
 }
 \examples{

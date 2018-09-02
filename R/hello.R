@@ -141,6 +141,22 @@ test_model <- function(trained_MIR_hmm,testdata){
 #'
 #' @param testresult A matrix containing actual and predicted values as returned by the function test_model().
 #' @return A percentage value between 0 and 1. 0.5 means that 50% of the predictions were correct.
+#' @examples
+#' # Example for the case that all datasets are located in S:/
+#'
+#' # Prepare data
+#' jams <- load_jams("S:/", loadExample = TRUE)
+#' jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
+#' jam_sequence <- create_time_sequence(jams_with_genre)
+#' splitted_data <- split_data(jam_sequence)
+#' training_dataset <- splitted_data[[1]]
+#' test_dataset <- splitted_data[[2]]
+#'
+#' # Train model
+#' hmm <- MIR_hmm(training_dataset)
+#' test_results <- test_model(hmm,test_dataset)
+#' # Calculate accuracy
+#' print(calcAccuracy(test_results))
 #' @export
 calcAccuracy <- function(testresult){
   return(nrow(testresult[testresult$ACTUAL == testresult$PREDICTED,])/nrow(testresult))
@@ -200,7 +216,7 @@ predict_next <- function(MIR_hmm, obs){
 #' of the affected user will be deleted.
 #'
 #'
-#' @param jams_path Path to the location of the unzipped thisismyjam folder.
+#' @param jams_path Path to the location of the unzipped thisismyjam folder downloaded from https://archive.org/download/thisismyjam-datadump/thisismyjam-datadump.zip.
 #' @param loadExample If set to TRUE only example data will be loaded. This is mainly used to test the package.
 #' @return Returns a matrix of jams containing the following columns.
 #' \item{jam_id}{Identification number of a jam.}
@@ -244,7 +260,7 @@ load_jams <- function(jams_path, loadExample = FALSE){
 #' carry no useful information for the later training procedure of the Hidden Markov Model.
 #'
 #' @param jams_clean Return value of the loadJams() function.
-#' @param LFM_path Path to the location of the unzipped LFM folder.
+#' @param LFM_path Path to the location of the unzipped LFM folder downloaded from http://www.cp.jku.at/datasets/LFM-1b/LFM-1b_UGP.zip.
 #' @param loadExample If set to TRUE only example data will be loaded. This is mainly used to test the package.
 #' @return Returns a matrix containing the same columns as the return value of the load_jams() function except for one additional value:
 #' \item{genre}{The genre the artist belongs to according to last.fm.}
@@ -375,7 +391,7 @@ split_data <- function(data, split_ratio = .50){
 #' Initialise a hidden markov model for music information retrieval with training data
 #'
 #' This function initialise a Hidden Markov Model for music information retrieval. Thereby the model is basically a wrapper
-#' for two other HMM classes of different packages. The HMM package and the hmm.discnp package. hmm.discnp is used for fitting
+#' for two other HMM objects of different packages. The HMM package and the hmm.discnp package. hmm.discnp is used for fitting
 #' the model to the training dataset while hmm is used to predict next genres.
 #'
 #' @param training_data training dataset as returned by the function split_data().

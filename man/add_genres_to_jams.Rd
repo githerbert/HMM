@@ -9,7 +9,7 @@ add_genres_to_jams(jams_clean, LFM_path, loadExample = FALSE)
 \arguments{
 \item{jams_clean}{Return value of the loadJams() function.}
 
-\item{LFM_path}{Path to the location of the unzipped LFM folder.}
+\item{LFM_path}{Path to the location of the unzipped LFM folder downloaded from http://www.cp.jku.at/datasets/LFM-1b/LFM-1b_UGP.zip.}
 
 \item{loadExample}{If set to TRUE only example data will be loaded. This is mainly used to test the package.}
 }

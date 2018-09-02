@@ -16,3 +16,20 @@ A percentage value between 0 and 1. 0.5 means that 50% of the predictions were c
 The accuracy is the fraction of predictions that were true. It is calculated by dividing the number of correct predictions through
 the total number of predictions.
 }
+\examples{
+# Example for the case that all datasets are located in S:/
+
+# Prepare data
+jams <- load_jams("S:/", loadExample = TRUE)
+jams_with_genre <- add_genres_to_jams(jams, "S:/", loadExample = TRUE)
+jam_sequence <- create_time_sequence(jams_with_genre)
+splitted_data <- split_data(jam_sequence)
+training_dataset <- splitted_data[[1]]
+test_dataset <- splitted_data[[2]]
+
+# Train model
+hmm <- MIR_hmm(training_dataset)
+test_results <- test_model(hmm,test_dataset)
+# Calculate accuracy
+print(calcAccuracy(test_results))
+}

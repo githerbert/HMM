@@ -7,7 +7,7 @@
 load_jams(jams_path, loadExample = FALSE)
 }
 \arguments{
-\item{jams_path}{Path to the location of the unzipped thisismyjam folder.}
+\item{jams_path}{Path to the location of the unzipped thisismyjam folder downloaded from https://archive.org/download/thisismyjam-datadump/thisismyjam-datadump.zip.}
 
 \item{loadExample}{If set to TRUE only example data will be loaded. This is mainly used to test the package.}
 }
